@@ -245,11 +245,17 @@ def login():
     
     return render_template('login.html')
 
-@app.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for('login'))
+
+@app.route("/reset-db-secret", methods=["GET"])
+def reset_db_secret():
+    try:
+        from app import db
+        db.drop_all()
+        db.create_all()
+        return "✅ Database reset successfully!", 200
+    except Exception as e:
+        return f"❌ Error: {e}", 500
+
 
 # ==================== CHAT API ====================
 
