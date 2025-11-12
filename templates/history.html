@@ -1,46 +1,325 @@
-# ==================== CHAT HISTORY ROUTES ====================
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat History - Aria AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-@app.route('/history')
-@login_required
-def chat_history():
-    # Get all messages for current user, grouped by date
-    messages = Message.query.filter_by(user_id=current_user.id).order_by(
-        Message.timestamp.desc()
-    ).all()
-    
-    # Group by date
-    from collections import defaultdict
-    grouped_messages = defaultdict(list)
-    
-    for msg in messages:
-        date_key = msg.timestamp.strftime('%d %b %Y')
-        grouped_messages[date_key].append(msg)
-    
-    total_chats = len(messages)
-    
-    return render_template('history.html', 
-                         grouped_messages=dict(grouped_messages),
-                         total_chats=total_chats)
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
 
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
 
-@app.route('/api/delete-chat/<int:message_id>', methods=['POST'])
-@login_required
-def delete_chat(message_id):
-    message = Message.query.get_or_404(message_id)
-    
-    # Check if message belongs to current user
-    if message.user_id != current_user.id:
-        return jsonify({'error': 'Unauthorized'}), 403
-    
-    db.session.delete(message)
-    db.session.commit()
-    
-    return jsonify({'success': True})
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
+        .header h1 {
+            color: #667eea;
+            font-size: 28px;
+        }
 
-@app.route('/api/clear-history', methods=['POST'])
-@login_required
-def clear_history():
-    Message.query.filter_by(user_id=current_user.id).delete()
-    db.session.commit()
-    return jsonify({'success': True, 'message': 'Chat history cleared!'})
+        .header-stats {
+            text-align: right;
+        }
+
+        .header-stats .total {
+            font-size: 24px;
+            font-weight: bold;
+            color: #764ba2;
+        }
+
+        .header-stats .label {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .action-bar {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            padding: 10px 15px;
+            border: 2px solid #667eea;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .btn-back {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-clear {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .history-section {
+            margin-bottom: 20px;
+        }
+
+        .date-header {
+            background: rgba(255,255,255,0.9);
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #667eea;
+            font-size: 16px;
+        }
+
+        .chat-item {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+
+        .chat-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        .chat-sender {
+            font-weight: bold;
+            font-size: 12px;
+            margin-bottom: 5px;
+            color: #667eea;
+        }
+
+        .chat-content {
+            color: #333;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .chat-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: #999;
+        }
+
+        .delete-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s;
+        }
+
+        .delete-btn:hover {
+            background: #ff5252;
+            transform: scale(1.05);
+        }
+
+        .empty-state {
+            background: white;
+            padding: 60px 20px;
+            border-radius: 15px;
+            text-align: center;
+            color: #999;
+        }
+
+        .empty-state h2 {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            font-size: 18px;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+
+            .action-bar {
+                flex-direction: column;
+            }
+
+            .search-box {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1>📜 Chat History</h1>
+                <p style="color: #666; font-size: 14px; margin-top: 5px;">Your conversation archive</p>
+            </div>
+            <div class="header-stats">
+                <div class="total">{{ total_chats }}</div>
+                <div class="label">Total Messages</div>
+            </div>
+        </div>
+
+        <!-- Action Bar -->
+        <div class="action-bar">
+            <input type="text" class="search-box" id="searchBox" placeholder="🔍 Search conversations...">
+            <button class="btn btn-back" onclick="window.location.href='/'">← Back to Chat</button>
+            <button class="btn btn-clear" onclick="clearAllHistory()">🗑️ Clear All</button>
+        </div>
+
+        <!-- Chat History -->
+        {% if grouped_messages %}
+            {% for date, messages in grouped_messages.items() %}
+            <div class="history-section">
+                <div class="date-header">📅 {{ date }}</div>
+                {% for msg in messages %}
+                <div class="chat-item" data-message="{{ msg.message|lower }}">
+                    <div class="chat-sender">
+                        {% if msg.is_user %}
+                            👤 You
+                        {% else %}
+                            🤖 Aria AI
+                        {% endif %}
+                    </div>
+                    <div class="chat-content">{{ msg.message }}</div>
+                    <div class="chat-meta">
+                        <span>⏰ {{ msg.timestamp.strftime('%I:%M %p') }}</span>
+                        <button class="delete-btn" onclick="deleteChat(async (params) => {
+                            {{ msg.id }}
+                        })">Delete</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <h2>📭</h2>
+                <p>No chat history yet!</p>
+                <p style="font-size: 14px; margin-top: 10px;">Start chatting to see your conversations here.</p>
+                <button class="btn btn-back" style="margin-top: 20px;" onclick="window.location.href='/'">
+                    Start Chatting →
+                </button>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Search functionality
+        const searchBox = document.getElementById('searchBox');
+        searchBox.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const chatItems = document.querySelectorAll('.chat-item');
+            
+            chatItems.forEach(item => {
+                const text = item.getAttribute('data-message');
+                if (text.includes(searchTerm)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+
+        // Delete individual chat
+        function deleteChat(messageId) {
+            if (confirm('Delete this message?')) {
+                fetch(`/api/delete-chat/${messageId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error deleting message!');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error deleting message!');
+                });
+            }
+        }
+
+        // Clear all history
+        function clearAllHistory() {
+            if (confirm('⚠️ Are you sure you want to delete ALL chat history? This cannot be undone!')) {
+                fetch('/api/clear-history', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('✅ ' + data.message);
+                        location.reload();
+                    } else {
+                        alert('❌ Error clearing history!');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('❌ Error clearing history!');
+                });
+            }
+        }
+    </script>
+</body>
+</html>
