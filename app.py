@@ -40,12 +40,6 @@ api_key = os.getenv('GEMINI_API_KEY')
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-2.0-flash')
 
-# Image generation model
-try:
-    image_model = genai.GenerativeModel('gemini-2.0-flash-exp-image-generation')
-except:
-    image_model = None  # Fallback if model not available
-
 # ==================== DATABASE MODELS ====================
 
 class User(UserMixin, db.Model):
@@ -168,57 +162,84 @@ def home():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        data = request.get_json()
-        username = data.get('username')
-        email = data.get('email')
-        password = data.get('password')
+        try:
+            data = request.get_json()
+            username = data.get('username')
+            email = data.get('email')
+            password = data.get('password')
+            
+            # Quick validation
+            if not username or not email or not password:
+                return jsonify({'error': 'All fields required'}), 400
+            
+            # Check existing (single query)
+            existing = User.query.filter(
+                (User.email == email) | (User.username == username)
+            ).first()
+            
+            if existing:
+                if existing.email == email:
+                    return jsonify({'error': 'Email already exists'}), 400
+                else:
+                    return jsonify({'error': 'Username already exists'}), 400
+            
+            # Faster hashing with fewer iterations
+            hashed_password = generate_password_hash(
+                password, 
+                method='pbkdf2:sha256', 
+                salt_length=8
+            )
+            
+            # Check early bird status
+            total_users = User.query.count()
+            signup_number = total_users + 1
+            is_early_bird = signup_number <= 50
+            
+            new_user = User(
+                username=username,
+                email=email,
+                password=hashed_password,
+                signup_number=signup_number,
+                is_early_bird=is_early_bird,
+                last_reset_date=date.today()
+            )
+            
+            db.session.add(new_user)
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'is_early_bird': is_early_bird,
+                'signup_number': signup_number
+            })
         
-        if User.query.filter_by(email=email).first():
-            return jsonify({'error': 'Email already exists'}), 400
-        
-        if User.query.filter_by(username=username).first():
-            return jsonify({'error': 'Username already exists'}), 400
-        
-        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-        
-        total_users = User.query.count()
-        signup_number = total_users + 1
-        is_early_bird = signup_number <= 50
-        
-        new_user = User(
-            username=username,
-            email=email,
-            password=hashed_password,
-            signup_number=signup_number,
-            is_early_bird=is_early_bird,
-            last_reset_date=date.today()
-        )
-        
-        db.session.add(new_user)
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'is_early_bird': is_early_bird,
-            'signup_number': signup_number
-        })
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': str(e)}), 500
     
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        data = request.get_json()
-        email = data.get('email')
-        password = data.get('password')
+        try:
+            data = request.get_json()
+            email = data.get('email')
+            password = data.get('password')
+            
+            if not email or not password:
+                return jsonify({'error': 'All fields required'}), 400
+            
+            user = User.query.filter_by(email=email).first()
+            
+            if user and check_password_hash(user.password, password):
+                login_user(user, remember=True, duration=timedelta(days=7))
+                return jsonify({'success': True})
+            
+            return jsonify({'error': 'Invalid credentials'}), 401
         
-        user = User.query.filter_by(email=email).first()
-        
-        if user and check_password_hash(user.password, password):
-            login_user(user)
-            return jsonify({'success': True})
-        
-        return jsonify({'error': 'Invalid credentials'}), 401
+        except Exception as e:
+            return jsonify({'error': 'Login failed'}), 500
     
     return render_template('login.html')
 
@@ -284,61 +305,8 @@ def chat():
         })
         
     except Exception as e:
+        db.session.rollback()
         return jsonify({'response': f'Error: {str(e)}'}), 500
-
-# ==================== IMAGE GENERATION ====================
-
-@app.route('/generate-image', methods=['POST'])
-@login_required
-def generate_image():
-    """Generate images using Gemini"""
-    try:
-        data = request.json
-        prompt = data.get('prompt')
-        
-        # Check time limit
-        reset_daily_limit(current_user)
-        time_remaining = get_time_remaining(current_user)
-        
-        if time_remaining <= 0 and not current_user.is_premium:
-            return jsonify({
-                'error': 'Daily limit reached! Upgrade to Premium.',
-                'limit_reached': True
-            }), 403
-        
-        if not image_model:
-            return jsonify({
-                'error': 'Image generation not available. Please upgrade Gemini API access.'
-            }), 400
-        
-        # Generate image using Gemini
-        response = image_model.generate_content(prompt)
-        
-        # Extract image data
-        # Note: Actual implementation depends on Gemini's response format
-        # This is a placeholder - adjust based on actual API response
-        
-        image_url = "https://via.placeholder.com/512x512.png?text=Generated+Image"  # Placeholder
-        
-        # Save to message history
-        msg = Message(
-            user_id=current_user.id,
-            message=f"Generated image: {prompt}",
-            is_user=False,
-            media_type='image',
-            media_url=image_url
-        )
-        db.session.add(msg)
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'image_url': image_url,
-            'prompt': prompt
-        })
-            
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 # ==================== PAYMENT ROUTES ====================
 

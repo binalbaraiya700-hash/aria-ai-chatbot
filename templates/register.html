@@ -26,8 +26,20 @@
             padding: 40px;
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            width: 90%;
+            width: 100%;
             max-width: 400px;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .logo {
@@ -42,40 +54,62 @@
             -webkit-text-fill-color: transparent;
             color: transparent;
             font-size: 32px;
+            margin-bottom: 10px;
         }
 
         .logo p {
             color: #666;
             font-size: 14px;
-            margin-top: 5px;
         }
 
         .form-group {
             margin-bottom: 20px;
         }
 
-        label {
+        .form-group label {
             display: block;
             margin-bottom: 8px;
             color: #333;
             font-weight: 500;
+            font-size: 14px;
         }
 
-        input {
+        .form-group input {
             width: 100%;
             padding: 12px 15px;
             border: 2px solid #e0e0e0;
             border-radius: 10px;
-            font-size: 15px;
-            transition: border 0.3s;
-        }
-
-        input:focus {
+            font-size: 14px;
+            transition: all 0.3s;
             outline: none;
-            border-color: #667eea;
         }
 
-        .btn {
+        .form-group input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            font-size: 13px;
+            margin-top: 10px;
+            display: none;
+            padding: 10px;
+            background: rgba(255, 107, 107, 0.1);
+            border-radius: 8px;
+        }
+
+        .success-message {
+            color: #51cf66;
+            font-size: 13px;
+            margin-top: 10px;
+            display: none;
+            padding: 10px;
+            background: rgba(81, 207, 102, 0.1);
+            border-radius: 8px;
+        }
+
+        .register-btn {
             width: 100%;
             padding: 14px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -88,19 +122,21 @@
             transition: transform 0.2s;
         }
 
-        .btn:hover {
+        .register-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
         }
 
-        .btn:active {
-            transform: translateY(0);
+        .register-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         .login-link {
             text-align: center;
             margin-top: 20px;
             color: #666;
+            font-size: 14px;
         }
 
         .login-link a {
@@ -113,57 +149,21 @@
             text-decoration: underline;
         }
 
-        .alert {
-            padding: 12px 15px;
+        .early-bird-banner {
+            background: linear-gradient(135deg, #ff6b6b, #ffd700);
+            color: white;
+            padding: 12px;
             border-radius: 10px;
+            text-align: center;
             margin-bottom: 20px;
-            font-size: 14px;
-        }
-
-        .alert-error {
-            background: #fee;
-            color: #c33;
-            border: 1px solid #fcc;
-        }
-
-        .alert-success {
-            background: #efe;
-            color: #3c3;
-            border: 1px solid #cfc;
-        }
-
-        .features {
-            background: #f8f9ff;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-
-        .features h3 {
-            color: #667eea;
-            font-size: 16px;
-            margin-bottom: 10px;
-        }
-
-        .features ul {
-            list-style: none;
-            padding: 0;
-        }
-
-        .features li {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 8px;
-            padding-left: 20px;
-            position: relative;
-        }
-
-        .features li:before {
-            content: "✓";
-            position: absolute;
-            left: 0;
-            color: #667eea;
+            font-size: 13px;
             font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
         }
     </style>
 </head>
@@ -171,51 +171,124 @@
     <div class="register-container">
         <div class="logo">
             <h1>✈️ Aria AI</h1>
-            <p>Create Your Free Account</p>
+            <p>Your Intelligent Assistant</p>
         </div>
 
-        <div class="features">
-            <h3>🎁 Free Account Includes:</h3>
-            <ul>
-                <li>10 messages per day</li>
-                <li>Multi-language support</li>
-                <li>AI-powered responses</li>
-                <li>Aviation career guidance</li>
-            </ul>
+        <div class="early-bird-banner">
+            🔥 First 50 Users: ₹89/month (3 months)
         </div>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+        <div id="errorMessage" class="error-message"></div>
+        <div id="successMessage" class="success-message"></div>
 
-        <form method="POST" action="/register">
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" placeholder="Choose a username" required>
-            </div>
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" placeholder="Choose a username" required>
+        </div>
 
-            <div class="form-group">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" placeholder="Enter your email" required>
-            </div>
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" placeholder="Enter your email" required>
+        </div>
 
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" placeholder="Create a password (min 6 characters)" required minlength="6">
-            </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Create a password" required>
+        </div>
 
-            <button type="submit" class="btn">Create Account</button>
-        </form>
+        <button class="register-btn" id="registerBtn" onclick="handleRegister()">Create Account</button>
 
         <div class="login-link">
             Already have an account? <a href="/login">Login here</a>
         </div>
     </div>
+
+    <script>
+        function handleRegister() {
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+            const registerBtn = document.getElementById('registerBtn');
+
+            // Validation
+            if (!username || !email || !password) {
+                errorDiv.textContent = 'Please fill in all fields';
+                errorDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+                return;
+            }
+
+            if (password.length < 6) {
+                errorDiv.textContent = 'Password must be at least 6 characters';
+                errorDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+                return;
+            }
+
+            // Disable button
+            registerBtn.disabled = true;
+            registerBtn.textContent = 'Creating Account...';
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+
+            // Create XMLHttpRequest
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/register', true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.success) {
+                        let message = '✅ Account created successfully!';
+                        if (response.is_early_bird) {
+                            message += ' 🎉 You are user #' + response.signup_number + ' - Early Bird eligible!';
+                        }
+                        successDiv.textContent = message;
+                        successDiv.style.display = 'block';
+                        
+                        // Redirect to login after 2 seconds
+                        setTimeout(function() {
+                            window.location.href = '/login';
+                        }, 2000);
+                    } else {
+                        errorDiv.textContent = response.error || 'Registration failed';
+                        errorDiv.style.display = 'block';
+                        registerBtn.disabled = false;
+                        registerBtn.textContent = 'Create Account';
+                    }
+                } else {
+                    const response = JSON.parse(xhr.responseText);
+                    errorDiv.textContent = response.error || 'Registration failed';
+                    errorDiv.style.display = 'block';
+                    registerBtn.disabled = false;
+                    registerBtn.textContent = 'Create Account';
+                }
+            };
+
+            xhr.onerror = function() {
+                errorDiv.textContent = 'Network error. Please try again.';
+                errorDiv.style.display = 'block';
+                registerBtn.disabled = false;
+                registerBtn.textContent = 'Create Account';
+            };
+
+            // Send request
+            xhr.send(JSON.stringify({
+                username: username,
+                email: email,
+                password: password
+            }));
+        }
+
+        // Enter key support
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                handleRegister();
+            }
+        });
+    </script>
 </body>
 </html>
