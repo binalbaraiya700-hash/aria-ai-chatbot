@@ -1,0 +1,46 @@
+# ==================== CHAT HISTORY ROUTES ====================
+
+@app.route('/history')
+@login_required
+def chat_history():
+    # Get all messages for current user, grouped by date
+    messages = Message.query.filter_by(user_id=current_user.id).order_by(
+        Message.timestamp.desc()
+    ).all()
+    
+    # Group by date
+    from collections import defaultdict
+    grouped_messages = defaultdict(list)
+    
+    for msg in messages:
+        date_key = msg.timestamp.strftime('%d %b %Y')
+        grouped_messages[date_key].append(msg)
+    
+    total_chats = len(messages)
+    
+    return render_template('history.html', 
+                         grouped_messages=dict(grouped_messages),
+                         total_chats=total_chats)
+
+
+@app.route('/api/delete-chat/<int:message_id>', methods=['POST'])
+@login_required
+def delete_chat(message_id):
+    message = Message.query.get_or_404(message_id)
+    
+    # Check if message belongs to current user
+    if message.user_id != current_user.id:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    db.session.delete(message)
+    db.session.commit()
+    
+    return jsonify({'success': True})
+
+
+@app.route('/api/clear-history', methods=['POST'])
+@login_required
+def clear_history():
+    Message.query.filter_by(user_id=current_user.id).delete()
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Chat history cleared!'})
