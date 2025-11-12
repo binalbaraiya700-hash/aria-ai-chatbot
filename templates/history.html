@@ -215,7 +215,15 @@
         <div class="action-bar">
             <input type="text" class="search-box" id="searchBox" placeholder="🔍 Search conversations...">
             <button class="btn btn-back" onclick="window.location.href='/'">← Back to Chat</button>
+            <button class="btn btn-export" onclick="exportMenu()" style="background: #51cf66;">📥 Export</button>
             <button class="btn btn-clear" onclick="clearAllHistory()">🗑️ Clear All</button>
+        </div>
+
+        <!-- Export Menu -->
+        <div class="export-menu" id="exportMenu" style="display: none;">
+            <button onclick="exportAsTXT()">📄 Download as TXT</button>
+            <button onclick="copyToClipboard()">📋 Copy to Clipboard</button>
+            <button onclick="printChat()">🖨️ Print</button>
         </div>
 
         <!-- Chat History -->
@@ -235,9 +243,7 @@
                     <div class="chat-content">{{ msg.message }}</div>
                     <div class="chat-meta">
                         <span>⏰ {{ msg.timestamp.strftime('%I:%M %p') }}</span>
-                        <button class="delete-btn" onclick="deleteChat(async (params) => {
-                            {{ msg.id }}
-                        })">Delete</button>
+                        <button class="delete-btn" onclick="deleteChat({{ msg.id }})">Delete</button>
                     </div>
                 </div>
                 {% endfor %}
