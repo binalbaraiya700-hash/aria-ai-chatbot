@@ -466,14 +466,42 @@ def make_premium(user_id):
 
 if __name__ == '__main__':
     with app.app_context():
+        # Create tables if not exist
         db.create_all()
+        
+        # Add missing columns to existing tables
+        try:
+            from sqlalchemy import inspect, text
+            inspector = inspect(db.engine)
+            
+            # Check if new columns exist in User table
+            user_columns = [col['name'] for col in inspector.get_columns('user')]
+            
+            # Add missing columns
+            with db.engine.connect() as conn:
+                if 'is_early_bird' not in user_columns:
+                    conn.execute(text('ALTER TABLE user ADD COLUMN is_early_bird BOOLEAN DEFAULT 0'))
+                    conn.commit()
+                
+                if 'signup_number' not in user_columns:
+                    conn.execute(text('ALTER TABLE user ADD COLUMN signup_number INTEGER'))
+                    conn.commit()
+                
+                if 'daily_chat_seconds' not in user_columns:
+                    conn.execute(text('ALTER TABLE user ADD COLUMN daily_chat_seconds INTEGER DEFAULT 0'))
+                    conn.commit()
+                
+                if 'last_reset_date' not in user_columns:
+                    conn.execute(text('ALTER TABLE user ADD COLUMN last_reset_date DATE'))
+                    conn.commit()
+                
+                if 'total_chat_seconds' not in user_columns:
+                    conn.execute(text('ALTER TABLE user ADD COLUMN total_chat_seconds INTEGER DEFAULT 0'))
+                    conn.commit()
+            
+            print("✅ Database migration completed!")
+        except Exception as e:
+            print(f"⚠️ Migration error (safe to ignore if fresh DB): {e}")
+    
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
-
-
-
-
-
-
-
-    
