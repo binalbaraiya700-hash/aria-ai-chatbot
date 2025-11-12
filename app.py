@@ -446,6 +446,68 @@ def make_premium(user_id):
     
     return jsonify({'success': True})
 
+# ==================== VOICE CHAT ROUTES ====================
+
+@app.route('/voice-chat', methods=['POST'])
+@login_required
+def voice_chat():
+    """Handle voice input and return audio response"""
+    start_time = datetime.utcnow()
+    
+    # Check time limit
+    reset_daily_limit(current_user)
+    time_remaining = get_time_remaining(current_user)
+    
+    if time_remaining <= 0 and not current_user.is_premium:
+        return jsonify({
+            'error': 'Daily limit reached',
+            'limit_reached': True
+        }), 403
+    
+    try:
+        data = request.json
+        user_message = data.get('message')
+        
+        # Save user message
+        user_msg = Message(user_id=current_user.id, message=user_message, is_user=True)
+        db.session.add(user_msg)
+        
+        # Get AI response
+        response = model.generate_content(user_message)
+        ai_response = response.text
+        
+        # Calculate duration
+        end_time = datetime.utcnow()
+        duration = int((end_time - start_time).total_seconds())
+        
+        # Update user's chat time
+        if not current_user.is_premium:
+            current_user.daily_chat_seconds += duration
+        current_user.total_chat_seconds += duration
+        
+        # Save AI response
+        ai_msg = Message(
+            user_id=current_user.id,
+            message=ai_response,
+            is_user=False,
+            duration_seconds=duration
+        )
+        db.session.add(ai_msg)
+        db.session.commit()
+        
+        # Get updated time remaining
+        time_remaining = get_time_remaining(current_user)
+        
+        return jsonify({
+            'response': ai_response,
+            'time_remaining': time_remaining,
+            'time_remaining_formatted': format_time(time_remaining),
+            'duration': duration
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # ==================== RUN APP ====================
 
 if __name__ == '__main__':

@@ -60,7 +60,6 @@
             align-items: flex-end;
         }
 
-        /* Timer Display */
         .timer-container {
             background: rgba(255,255,255,0.2);
             padding: 8px 15px;
@@ -130,7 +129,6 @@
             border: none;
             margin-top: 5px;
             transition: transform 0.2s;
-            position: relative;
         }
 
         .upgrade-btn:hover {
@@ -215,6 +213,36 @@
             max-width: 70%;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             word-wrap: break-word;
+            position: relative;
+        }
+
+        /* Voice button in bot message */
+        .speak-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 8px;
+            vertical-align: middle;
+            transition: all 0.2s;
+        }
+
+        .speak-btn:hover {
+            background: #764ba2;
+            transform: scale(1.1);
+        }
+
+        .speak-btn.speaking {
+            animation: speaking-pulse 0.5s infinite;
+        }
+
+        @keyframes speaking-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
         }
 
         .chat-input-container {
@@ -226,6 +254,7 @@
         .input-wrapper {
             display: flex;
             gap: 10px;
+            align-items: center;
         }
 
         #userInput {
@@ -241,6 +270,38 @@
         #userInput:focus {
             border-color: #764ba2;
             box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.1);
+        }
+
+        /* Voice input button */
+        #voiceBtn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        #voiceBtn:hover {
+            transform: scale(1.1);
+        }
+
+        #voiceBtn.listening {
+            background: #ff6b6b;
+            animation: listening-pulse 1s infinite;
+        }
+
+        @keyframes listening-pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 0 15px rgba(255, 107, 107, 0);
+            }
         }
 
         #sendBtn {
@@ -296,7 +357,37 @@
             }
         }
 
-        /* Limit reached overlay */
+        /* Voice status indicator */
+        .voice-status {
+            display: none;
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 30px;
+            font-size: 14px;
+            z-index: 100;
+        }
+
+        .voice-status.active {
+            display: block;
+            animation: slideUp 0.3s;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
         .limit-overlay {
             display: none;
             position: fixed;
@@ -387,7 +478,12 @@
         <div class="chat-messages" id="chatMessages">
             {% for msg in messages %}
             <div class="message {% if msg.is_user %}user-message{% else %}bot-message{% endif %}">
-                <div class="message-content">{{ msg.message }}</div>
+                <div class="message-content">
+                    {{ msg.message }}
+                    {% if not msg.is_user %}
+                        <button class="speak-btn" onclick="speakText('{{ msg.message|replace("'", "\\'") }}', this)" title="Listen">🔊</button>
+                    {% endif %}
+                </div>
             </div>
             {% endfor %}
         </div>
@@ -400,10 +496,16 @@
 
         <div class="chat-input-container">
             <div class="input-wrapper">
-                <input type="text" id="userInput" placeholder="Type your message..." autocomplete="off">
+                <button id="voiceBtn" onclick="toggleVoiceInput()" title="Voice Input">🎤</button>
+                <input type="text" id="userInput" placeholder="Type or speak your message..." autocomplete="off">
                 <button id="sendBtn" onclick="sendMessage()">Send</button>
             </div>
         </div>
+    </div>
+
+    <!-- Voice Status Indicator -->
+    <div class="voice-status" id="voiceStatus">
+        🎤 Listening...
     </div>
 
     <!-- Limit Reached Overlay -->
@@ -421,6 +523,124 @@
     <script>
         let timeRemaining = {{ time_remaining }};
         let timerInterval;
+        let recognition;
+        let synthesis = window.speechSynthesis;
+        let isListening = false;
+        let currentSpeaking = null;
+
+        // Initialize Speech Recognition
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = function() {
+                isListening = true;
+                document.getElementById('voiceBtn').classList.add('listening');
+                document.getElementById('voiceStatus').classList.add('active');
+                document.getElementById('voiceStatus').textContent = '🎤 Listening...';
+            };
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('userInput').value = transcript;
+                document.getElementById('voiceStatus').textContent = '✅ Got it!';
+                
+                setTimeout(() => {
+                    sendMessage();
+                }, 500);
+            };
+
+            recognition.onerror = function(event) {
+                console.error('Speech recognition error:', event.error);
+                document.getElementById('voiceStatus').textContent = '❌ Error. Try again!';
+                setTimeout(() => {
+                    document.getElementById('voiceStatus').classList.remove('active');
+                }, 2000);
+            };
+
+            recognition.onend = function() {
+                isListening = false;
+                document.getElementById('voiceBtn').classList.remove('listening');
+                setTimeout(() => {
+                    document.getElementById('voiceStatus').classList.remove('active');
+                }, 2000);
+            };
+        }
+
+        // Toggle voice input
+        function toggleVoiceInput() {
+            if (!recognition) {
+                alert('❌ Voice recognition not supported in your browser. Please use Chrome or Edge.');
+                return;
+            }
+
+            if (timeRemaining <= 0 && !{{ 'true' if is_premium else 'false' }}) {
+                document.getElementById('limitOverlay').style.display = 'flex';
+                return;
+            }
+
+            if (isListening) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        }
+
+        // Text-to-Speech function
+        function speakText(text, button) {
+            // Stop any current speech
+            if (currentSpeaking) {
+                synthesis.cancel();
+                currentSpeaking.classList.remove('speaking');
+                if (currentSpeaking === button) {
+                    currentSpeaking = null;
+                    return;
+                }
+            }
+
+            // Clean text for speech
+            const cleanText = text.replace(/[*_`#]/g, '').substring(0, 500);
+            
+            const utterance = new SpeechSynthesisUtterance(cleanText);
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            utterance.volume = 1.0;
+
+            // Try to find a female voice
+            const voices = synthesis.getVoices();
+            const femaleVoice = voices.find(voice => 
+                voice.name.includes('Female') || 
+                voice.name.includes('Samantha') ||
+                voice.name.includes('Google UK English Female')
+            );
+            if (femaleVoice) {
+                utterance.voice = femaleVoice;
+            }
+
+            utterance.onstart = function() {
+                button.classList.add('speaking');
+                button.textContent = '🔇';
+                currentSpeaking = button;
+            };
+
+            utterance.onend = function() {
+                button.classList.remove('speaking');
+                button.textContent = '🔊';
+                currentSpeaking = null;
+            };
+
+            synthesis.speak(utterance);
+        }
+
+        // Load voices (needed for some browsers)
+        if (synthesis.onvoiceschanged !== undefined) {
+            synthesis.onvoiceschanged = function() {
+                synthesis.getVoices();
+            };
+        }
 
         // Update timer display
         function updateTimerDisplay() {
@@ -439,7 +659,6 @@
             if (timerElement) {
                 timerElement.querySelector('.timer-display').textContent = formatted;
                 
-                // Add warning color when < 5 minutes
                 if (timeRemaining < 300) {
                     timerElement.classList.add('timer-warning');
                 }
@@ -462,22 +681,18 @@
             
             if (!message) return;
             
-            // Check time limit
             if (timeRemaining <= 0 && !{{ 'true' if is_premium else 'false' }}) {
                 document.getElementById('limitOverlay').style.display = 'flex';
                 return;
             }
 
-            // Add user message
             addMessage(message, true);
             input.value = '';
 
-            // Show typing indicator
             document.getElementById('typingIndicator').style.display = 'block';
             document.getElementById('sendBtn').disabled = true;
 
-            // Send to backend
-            fetch('/chat', {
+            fetch('/voice-chat', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -490,12 +705,11 @@
                 document.getElementById('sendBtn').disabled = false;
 
                 if (data.limit_reached) {
-                    addMessage(data.response, false);
+                    addMessage(data.response || data.error, false);
                     document.getElementById('limitOverlay').style.display = 'flex';
                 } else {
-                    addMessage(data.response, false);
+                    addMessageWithVoice(data.response, false);
                     
-                    // Update timer
                     if (data.time_remaining !== undefined) {
                         timeRemaining = data.time_remaining;
                         updateTimerDisplay();
@@ -523,7 +737,31 @@
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
 
-        // Enter key to send
+        function addMessageWithVoice(text, isUser) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = text;
+            
+            if (!isUser) {
+                const speakBtn = document.createElement('button');
+                speakBtn.className = 'speak-btn';
+                speakBtn.textContent = '🔊';
+                speakBtn.title = 'Listen';
+                speakBtn.onclick = function() {
+                    speakText(text, this);
+                };
+                contentDiv.appendChild(speakBtn);
+            }
+            
+            messageDiv.appendChild(contentDiv);
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
         document.getElementById('userInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 sendMessage();
