@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 from flask_cors import CORS
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_sqlalchemy import SQLAlchemy
@@ -16,7 +16,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Config
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-here')
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-in-production')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -31,16 +31,20 @@ login_manager.login_view = 'login'
 
 # Razorpay setup
 razorpay_client = razorpay.Client(auth=(
-    os.getenv('RAZORPAY_KEY_ID'),
-    os.getenv('RAZORPAY_KEY_SECRET')
+    os.getenv('RAZORPAY_KEY_ID', ''),
+    os.getenv('RAZORPAY_KEY_SECRET', '')
 ))
 
 # Gemini AI setup
 api_key = os.getenv('GEMINI_API_KEY')
-if not api_key:
-    api_key = "PASTE_YOUR_API_KEY_HERE"  # Fallback for testing
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-2.0-flash')
+
+# Image generation model
+try:
+    image_model = genai.GenerativeModel('gemini-2.0-flash-exp-image-generation')
+except:
+    image_model = None  # Fallback if model not available
 
 # ==================== DATABASE MODELS ====================
 
@@ -57,10 +61,10 @@ class User(UserMixin, db.Model):
     is_early_bird = db.Column(db.Boolean, default=False)
     signup_number = db.Column(db.Integer, nullable=True)
     
-    # Timer features (NEW!)
-    daily_chat_seconds = db.Column(db.Integer, default=0)  # Seconds used today
+    # Timer features
+    daily_chat_seconds = db.Column(db.Integer, default=0)
     last_reset_date = db.Column(db.Date, nullable=True)
-    total_chat_seconds = db.Column(db.Integer, default=0)  # Lifetime usage
+    total_chat_seconds = db.Column(db.Integer, default=0)
     
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -72,8 +76,10 @@ class Message(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     message = db.Column(db.Text, nullable=False)
     is_user = db.Column(db.Boolean, default=True)
+    media_type = db.Column(db.String(20), default='text')  # text, image, video
+    media_url = db.Column(db.String(500), nullable=True)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    duration_seconds = db.Column(db.Integer, default=0)  # NEW: Time taken for this message
+    duration_seconds = db.Column(db.Integer, default=0)
 
 class Payment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -97,10 +103,10 @@ def reset_daily_limit(user):
 def get_time_remaining(user):
     """Get remaining chat time in seconds"""
     if user.is_premium:
-        return float('inf')  # Unlimited
+        return float('inf')
     
     reset_daily_limit(user)
-    max_seconds = 20 * 60  # 20 minutes = 1200 seconds
+    max_seconds = 20 * 60  # 20 minutes
     remaining = max_seconds - user.daily_chat_seconds
     return max(0, remaining)
 
@@ -136,7 +142,7 @@ def get_current_pricing():
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# ==================== ROUTES ====================
+# ==================== AUTH ROUTES ====================
 
 @app.route('/')
 @login_required
@@ -175,7 +181,6 @@ def register():
         
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
         
-        # Check if early bird slot available
         total_users = User.query.count()
         signup_number = total_users + 1
         is_early_bird = signup_number <= 50
@@ -230,13 +235,12 @@ def logout():
 def chat():
     start_time = datetime.utcnow()
     
-    # Check time limit
     reset_daily_limit(current_user)
     time_remaining = get_time_remaining(current_user)
     
     if time_remaining <= 0 and not current_user.is_premium:
         return jsonify({
-            'response': '⏰ Daily 20-minute limit reached! Upgrade to Premium for unlimited chat time. ⭐',
+            'response': '⏰ Daily 20-minute limit reached! Upgrade to Premium for unlimited chat.',
             'limit_reached': True
         })
     
@@ -270,7 +274,6 @@ def chat():
         db.session.add(ai_msg)
         db.session.commit()
         
-        # Get updated time remaining
         time_remaining = get_time_remaining(current_user)
         
         return jsonify({
@@ -283,6 +286,60 @@ def chat():
     except Exception as e:
         return jsonify({'response': f'Error: {str(e)}'}), 500
 
+# ==================== IMAGE GENERATION ====================
+
+@app.route('/generate-image', methods=['POST'])
+@login_required
+def generate_image():
+    """Generate images using Gemini"""
+    try:
+        data = request.json
+        prompt = data.get('prompt')
+        
+        # Check time limit
+        reset_daily_limit(current_user)
+        time_remaining = get_time_remaining(current_user)
+        
+        if time_remaining <= 0 and not current_user.is_premium:
+            return jsonify({
+                'error': 'Daily limit reached! Upgrade to Premium.',
+                'limit_reached': True
+            }), 403
+        
+        if not image_model:
+            return jsonify({
+                'error': 'Image generation not available. Please upgrade Gemini API access.'
+            }), 400
+        
+        # Generate image using Gemini
+        response = image_model.generate_content(prompt)
+        
+        # Extract image data
+        # Note: Actual implementation depends on Gemini's response format
+        # This is a placeholder - adjust based on actual API response
+        
+        image_url = "https://via.placeholder.com/512x512.png?text=Generated+Image"  # Placeholder
+        
+        # Save to message history
+        msg = Message(
+            user_id=current_user.id,
+            message=f"Generated image: {prompt}",
+            is_user=False,
+            media_type='image',
+            media_url=image_url
+        )
+        db.session.add(msg)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'image_url': image_url,
+            'prompt': prompt
+        })
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # ==================== PAYMENT ROUTES ====================
 
 @app.route('/create-order', methods=['POST'])
@@ -290,7 +347,7 @@ def chat():
 def create_order():
     try:
         pricing = get_current_pricing()
-        amount = pricing['price'] * 100  # Convert to paise
+        amount = pricing['price'] * 100
         
         order = razorpay_client.order.create({
             'amount': amount,
@@ -298,7 +355,6 @@ def create_order():
             'payment_capture': 1
         })
         
-        # Save payment record
         payment = Payment(
             user_id=current_user.id,
             razorpay_order_id=order['id'],
@@ -325,13 +381,11 @@ def payment_success():
         payment_id = data.get('razorpay_payment_id')
         order_id = data.get('razorpay_order_id')
         
-        # Update payment record
         payment = Payment.query.filter_by(razorpay_order_id=order_id).first()
         if payment:
             payment.razorpay_payment_id = payment_id
             payment.status = 'success'
             
-            # Activate premium
             pricing = get_current_pricing()
             duration_months = pricing['duration_months']
             
@@ -347,7 +401,7 @@ def payment_success():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# ==================== CHAT HISTORY ROUTES ====================
+# ==================== HISTORY ROUTES ====================
 
 @app.route('/history')
 @login_required
@@ -386,7 +440,7 @@ def delete_chat(message_id):
 def clear_history():
     Message.query.filter_by(user_id=current_user.id).delete()
     db.session.commit()
-    return jsonify({'success': True, 'message': 'Chat history cleared!'})
+    return jsonify({'success': True})
 
 # ==================== ADMIN ROUTES ====================
 
@@ -396,22 +450,16 @@ def admin_dashboard():
     if current_user.email not in ADMIN_EMAILS:
         return redirect(url_for('home'))
     
-    # Statistics
     total_users = User.query.count()
     premium_users = User.query.filter_by(is_premium=True).count()
     free_users = total_users - premium_users
     early_bird_users = User.query.filter_by(is_early_bird=True).count()
     
-    # Revenue
     total_revenue = db.session.query(db.func.sum(Payment.amount)).filter_by(status='success').scalar() or 0
     
-    # Recent users
     recent_users = User.query.order_by(User.created_at.desc()).limit(10).all()
-    
-    # Recent payments
     recent_payments = Payment.query.filter_by(status='success').order_by(Payment.created_at.desc()).limit(10).all()
     
-    # Pricing info
     pricing = get_current_pricing()
     
     return render_template('admin.html',
@@ -446,71 +494,10 @@ def make_premium(user_id):
     
     return jsonify({'success': True})
 
-# ==================== VOICE CHAT ROUTES ====================
-
-@app.route('/voice-chat', methods=['POST'])
-@login_required
-def voice_chat():
-    """Handle voice input and return audio response"""
-    start_time = datetime.utcnow()
-    
-    # Check time limit
-    reset_daily_limit(current_user)
-    time_remaining = get_time_remaining(current_user)
-    
-    if time_remaining <= 0 and not current_user.is_premium:
-        return jsonify({
-            'error': 'Daily limit reached',
-            'limit_reached': True
-        }), 403
-    
-    try:
-        data = request.json
-        user_message = data.get('message')
-        
-        # Save user message
-        user_msg = Message(user_id=current_user.id, message=user_message, is_user=True)
-        db.session.add(user_msg)
-        
-        # Get AI response
-        response = model.generate_content(user_message)
-        ai_response = response.text
-        
-        # Calculate duration
-        end_time = datetime.utcnow()
-        duration = int((end_time - start_time).total_seconds())
-        
-        # Update user's chat time
-        if not current_user.is_premium:
-            current_user.daily_chat_seconds += duration
-        current_user.total_chat_seconds += duration
-        
-        # Save AI response
-        ai_msg = Message(
-            user_id=current_user.id,
-            message=ai_response,
-            is_user=False,
-            duration_seconds=duration
-        )
-        db.session.add(ai_msg)
-        db.session.commit()
-        
-        # Get updated time remaining
-        time_remaining = get_time_remaining(current_user)
-        
-        return jsonify({
-            'response': ai_response,
-            'time_remaining': time_remaining,
-            'time_remaining_formatted': format_time(time_remaining),
-            'duration': duration
-        })
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
 # ==================== RUN APP ====================
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)

@@ -213,36 +213,6 @@
             max-width: 70%;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             word-wrap: break-word;
-            position: relative;
-        }
-
-        /* Voice button in bot message */
-        .speak-btn {
-            background: #667eea;
-            color: white;
-            border: none;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 12px;
-            margin-left: 8px;
-            vertical-align: middle;
-            transition: all 0.2s;
-        }
-
-        .speak-btn:hover {
-            background: #764ba2;
-            transform: scale(1.1);
-        }
-
-        .speak-btn.speaking {
-            animation: speaking-pulse 0.5s infinite;
-        }
-
-        @keyframes speaking-pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.2); }
         }
 
         .chat-input-container {
@@ -254,7 +224,6 @@
         .input-wrapper {
             display: flex;
             gap: 10px;
-            align-items: center;
         }
 
         #userInput {
@@ -270,38 +239,6 @@
         #userInput:focus {
             border-color: #764ba2;
             box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.1);
-        }
-
-        /* Voice input button */
-        #voiceBtn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            width: 50px;
-            height: 50px;
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 20px;
-            transition: all 0.3s;
-            position: relative;
-        }
-
-        #voiceBtn:hover {
-            transform: scale(1.1);
-        }
-
-        #voiceBtn.listening {
-            background: #ff6b6b;
-            animation: listening-pulse 1s infinite;
-        }
-
-        @keyframes listening-pulse {
-            0%, 100% {
-                box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7);
-            }
-            50% {
-                box-shadow: 0 0 0 15px rgba(255, 107, 107, 0);
-            }
         }
 
         #sendBtn {
@@ -354,37 +291,6 @@
             }
             30% {
                 transform: translateY(-10px);
-            }
-        }
-
-        /* Voice status indicator */
-        .voice-status {
-            display: none;
-            position: fixed;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 15px 30px;
-            border-radius: 30px;
-            font-size: 14px;
-            z-index: 100;
-        }
-
-        .voice-status.active {
-            display: block;
-            animation: slideUp 0.3s;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateX(-50%) translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(-50%) translateY(0);
             }
         }
 
@@ -478,12 +384,7 @@
         <div class="chat-messages" id="chatMessages">
             {% for msg in messages %}
             <div class="message {% if msg.is_user %}user-message{% else %}bot-message{% endif %}">
-                <div class="message-content">
-                    {{ msg.message }}
-                    {% if not msg.is_user %}
-                        <button class="speak-btn" onclick="speakText('{{ msg.message|replace("'", "\\'") }}', this)" title="Listen">🔊</button>
-                    {% endif %}
-                </div>
+                <div class="message-content">{{ msg.message }}</div>
             </div>
             {% endfor %}
         </div>
@@ -496,19 +397,12 @@
 
         <div class="chat-input-container">
             <div class="input-wrapper">
-                <button id="voiceBtn" onclick="toggleVoiceInput()" title="Voice Input">🎤</button>
-                <input type="text" id="userInput" placeholder="Type or speak your message..." autocomplete="off">
+                <input type="text" id="userInput" placeholder="Type your message..." autocomplete="off">
                 <button id="sendBtn" onclick="sendMessage()">Send</button>
             </div>
         </div>
     </div>
 
-    <!-- Voice Status Indicator -->
-    <div class="voice-status" id="voiceStatus">
-        🎤 Listening...
-    </div>
-
-    <!-- Limit Reached Overlay -->
     <div class="limit-overlay" id="limitOverlay">
         <div class="limit-modal">
             <h2>⏰ Daily Limit Reached!</h2>
@@ -523,126 +417,7 @@
     <script>
         let timeRemaining = {{ time_remaining }};
         let timerInterval;
-        let recognition;
-        let synthesis = window.speechSynthesis;
-        let isListening = false;
-        let currentSpeaking = null;
 
-        // Initialize Speech Recognition
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SpeechRecognition();
-            recognition.continuous = false;
-            recognition.interimResults = false;
-            recognition.lang = 'en-US';
-
-            recognition.onstart = function() {
-                isListening = true;
-                document.getElementById('voiceBtn').classList.add('listening');
-                document.getElementById('voiceStatus').classList.add('active');
-                document.getElementById('voiceStatus').textContent = '🎤 Listening...';
-            };
-
-            recognition.onresult = function(event) {
-                const transcript = event.results[0][0].transcript;
-                document.getElementById('userInput').value = transcript;
-                document.getElementById('voiceStatus').textContent = '✅ Got it!';
-                
-                setTimeout(() => {
-                    sendMessage();
-                }, 500);
-            };
-
-            recognition.onerror = function(event) {
-                console.error('Speech recognition error:', event.error);
-                document.getElementById('voiceStatus').textContent = '❌ Error. Try again!';
-                setTimeout(() => {
-                    document.getElementById('voiceStatus').classList.remove('active');
-                }, 2000);
-            };
-
-            recognition.onend = function() {
-                isListening = false;
-                document.getElementById('voiceBtn').classList.remove('listening');
-                setTimeout(() => {
-                    document.getElementById('voiceStatus').classList.remove('active');
-                }, 2000);
-            };
-        }
-
-        // Toggle voice input
-        function toggleVoiceInput() {
-            if (!recognition) {
-                alert('❌ Voice recognition not supported in your browser. Please use Chrome or Edge.');
-                return;
-            }
-
-            if (timeRemaining <= 0 && !{{ 'true' if is_premium else 'false' }}) {
-                document.getElementById('limitOverlay').style.display = 'flex';
-                return;
-            }
-
-            if (isListening) {
-                recognition.stop();
-            } else {
-                recognition.start();
-            }
-        }
-
-        // Text-to-Speech function
-        function speakText(text, button) {
-            // Stop any current speech
-            if (currentSpeaking) {
-                synthesis.cancel();
-                currentSpeaking.classList.remove('speaking');
-                if (currentSpeaking === button) {
-                    currentSpeaking = null;
-                    return;
-                }
-            }
-
-            // Clean text for speech
-            const cleanText = text.replace(/[*_`#]/g, '').substring(0, 500);
-            
-            const utterance = new SpeechSynthesisUtterance(cleanText);
-            utterance.rate = 1.0;
-            utterance.pitch = 1.0;
-            utterance.volume = 1.0;
-
-            // Try to find a female voice
-            const voices = synthesis.getVoices();
-            const femaleVoice = voices.find(voice => 
-                voice.name.includes('Female') || 
-                voice.name.includes('Samantha') ||
-                voice.name.includes('Google UK English Female')
-            );
-            if (femaleVoice) {
-                utterance.voice = femaleVoice;
-            }
-
-            utterance.onstart = function() {
-                button.classList.add('speaking');
-                button.textContent = '🔇';
-                currentSpeaking = button;
-            };
-
-            utterance.onend = function() {
-                button.classList.remove('speaking');
-                button.textContent = '🔊';
-                currentSpeaking = null;
-            };
-
-            synthesis.speak(utterance);
-        }
-
-        // Load voices (needed for some browsers)
-        if (synthesis.onvoiceschanged !== undefined) {
-            synthesis.onvoiceschanged = function() {
-                synthesis.getVoices();
-            };
-        }
-
-        // Update timer display
         function updateTimerDisplay() {
             if (timeRemaining <= 0) {
                 document.getElementById('timerDisplay').classList.add('timer-warning');
@@ -653,7 +428,7 @@
 
             const minutes = Math.floor(timeRemaining / 60);
             const seconds = timeRemaining % 60;
-            const formatted = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            const formatted = minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0');
             
             const timerElement = document.getElementById('timerDisplay');
             if (timerElement) {
@@ -665,9 +440,8 @@
             }
         }
 
-        // Start timer countdown
         {% if not is_premium %}
-        timerInterval = setInterval(() => {
+        timerInterval = setInterval(function() {
             if (timeRemaining > 0) {
                 timeRemaining--;
                 updateTimerDisplay();
@@ -692,70 +466,50 @@
             document.getElementById('typingIndicator').style.display = 'block';
             document.getElementById('sendBtn').disabled = true;
 
-            fetch('/voice-chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ message: message })
-            })
-            .then(response => response.json())
-            .then(data => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/chat', true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            
+            xhr.onload = function() {
                 document.getElementById('typingIndicator').style.display = 'none';
                 document.getElementById('sendBtn').disabled = false;
 
-                if (data.limit_reached) {
-                    addMessage(data.response || data.error, false);
-                    document.getElementById('limitOverlay').style.display = 'flex';
-                } else {
-                    addMessageWithVoice(data.response, false);
+                if (xhr.status === 200) {
+                    const data = JSON.parse(xhr.responseText);
                     
-                    if (data.time_remaining !== undefined) {
-                        timeRemaining = data.time_remaining;
-                        updateTimerDisplay();
+                    if (data.limit_reached) {
+                        addMessage(data.response, false);
+                        document.getElementById('limitOverlay').style.display = 'flex';
+                    } else {
+                        addMessage(data.response, false);
+                        
+                        if (data.time_remaining !== undefined) {
+                            timeRemaining = data.time_remaining;
+                            updateTimerDisplay();
+                        }
                     }
+                } else {
+                    addMessage('Error: Could not connect to AI', false);
                 }
-            })
-            .catch(error => {
+            };
+
+            xhr.onerror = function() {
                 document.getElementById('typingIndicator').style.display = 'none';
                 document.getElementById('sendBtn').disabled = false;
-                addMessage('Error: Could not connect to AI', false);
-            });
+                addMessage('Error: Network error', false);
+            };
+
+            xhr.send(JSON.stringify({ message: message }));
         }
 
         function addMessage(text, isUser) {
             const messagesDiv = document.getElementById('chatMessages');
             const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            messageDiv.className = 'message ' + (isUser ? 'user-message' : 'bot-message');
             
             const contentDiv = document.createElement('div');
             contentDiv.className = 'message-content';
             contentDiv.textContent = text;
-            
-            messageDiv.appendChild(contentDiv);
-            messagesDiv.appendChild(messageDiv);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
-
-        function addMessageWithVoice(text, isUser) {
-            const messagesDiv = document.getElementById('chatMessages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
-            
-            const contentDiv = document.createElement('div');
-            contentDiv.className = 'message-content';
-            contentDiv.textContent = text;
-            
-            if (!isUser) {
-                const speakBtn = document.createElement('button');
-                speakBtn.className = 'speak-btn';
-                speakBtn.textContent = '🔊';
-                speakBtn.title = 'Listen';
-                speakBtn.onclick = function() {
-                    speakText(text, this);
-                };
-                contentDiv.appendChild(speakBtn);
-            }
             
             messageDiv.appendChild(contentDiv);
             messagesDiv.appendChild(messageDiv);
@@ -769,48 +523,52 @@
         });
 
         function upgradeToPremium() {
-            fetch('/create-order', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                const options = {
-                    key: data.key_id,
-                    amount: data.amount,
-                    currency: 'INR',
-                    name: 'Aria AI',
-                    description: `Premium Subscription - ${data.pricing_info.is_early_bird ? 'Early Bird Special' : 'Monthly Plan'}`,
-                    order_id: data.order_id,
-                    handler: function(response) {
-                        fetch('/payment-success', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/create-order', true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    const data = JSON.parse(xhr.responseText);
+                    
+                    const options = {
+                        key: data.key_id,
+                        amount: data.amount,
+                        currency: 'INR',
+                        name: 'Aria AI',
+                        description: data.pricing_info.is_early_bird ? 'Early Bird Special' : 'Monthly Plan',
+                        order_id: data.order_id,
+                        handler: function(response) {
+                            const paymentXhr = new XMLHttpRequest();
+                            paymentXhr.open('POST', '/payment-success', true);
+                            paymentXhr.setRequestHeader('Content-Type', 'application/json');
+                            
+                            paymentXhr.onload = function() {
+                                if (paymentXhr.status === 200) {
+                                    const result = JSON.parse(paymentXhr.responseText);
+                                    if (result.success) {
+                                        alert('🎉 Premium activated successfully!');
+                                        location.reload();
+                                    }
+                                }
+                            };
+                            
+                            paymentXhr.send(JSON.stringify({
                                 razorpay_payment_id: response.razorpay_payment_id,
                                 razorpay_order_id: response.razorpay_order_id
-                            })
-                        })
-                        .then(res => res.json())
-                        .then(result => {
-                            if (result.success) {
-                                alert('🎉 Premium activated successfully!');
-                                location.reload();
-                            }
-                        });
-                    },
-                    theme: {
-                        color: '#667eea'
-                    }
-                };
-                
-                const rzp = new Razorpay(options);
-                rzp.open();
-            });
+                            }));
+                        },
+                        theme: {
+                            color: '#667eea'
+                        }
+                    };
+                    
+                    const rzp = new Razorpay(options);
+                    rzp.open();
+                }
+            };
+            
+            xhr.send();
         }
     </script>
 </body>
