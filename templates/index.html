@@ -6,15 +6,38 @@
     <title>Aria - Your AI Assistant</title>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <style>
+        :root {
+            --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-chat: #f5f5f5;
+            --bg-message: white;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --border-color: #e0e0e0;
+            --input-bg: white;
+            --header-text: white;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            --bg-chat: #0f1419;
+            --bg-message: #1a1d23;
+            --text-primary: #e4e6eb;
+            --text-secondary: #b0b3b8;
+            --border-color: #2d3748;
+            --input-bg: #1a1d23;
+            --header-text: #e4e6eb;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--bg-primary);
             height: 100vh;
             display: flex;
             justify-content: center;
@@ -25,7 +48,7 @@
             width: 90%;
             max-width: 600px;
             height: 90vh;
-            background: white;
+            background: var(--input-bg);
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             display: flex;
@@ -34,8 +57,8 @@
         }
 
         .chat-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: var(--bg-primary);
+            color: var(--header-text);
             padding: 15px 20px;
             display: flex;
             justify-content: space-between;
@@ -58,6 +81,38 @@
             flex-direction: column;
             gap: 5px;
             align-items: flex-end;
+        }
+
+        /* Dark Mode Toggle */
+        .theme-toggle {
+            position: relative;
+            width: 50px;
+            height: 24px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            cursor: pointer;
+            margin-bottom: 5px;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .theme-toggle-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 18px;
+            height: 18px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+
+        [data-theme="dark"] .theme-toggle-slider {
+            transform: translateX(26px);
+            background: #ffd700;
         }
 
         .timer-container {
@@ -153,7 +208,7 @@
 
         .logout-btn {
             background: rgba(255,255,255,0.2);
-            color: white;
+            color: var(--header-text);
             padding: 6px 12px;
             border-radius: 12px;
             font-size: 11px;
@@ -171,7 +226,7 @@
             flex: 1;
             padding: 20px;
             overflow-y: auto;
-            background: #f5f5f5;
+            background: var(--bg-chat);
         }
 
         .message {
@@ -205,8 +260,8 @@
         }
 
         .bot-message .message-content {
-            background: white;
-            color: #333;
+            background: var(--bg-message);
+            color: var(--text-primary);
             padding: 10px 15px;
             border-radius: 18px 18px 18px 5px;
             display: inline-block;
@@ -217,8 +272,8 @@
 
         .chat-input-container {
             padding: 20px;
-            background: white;
-            border-top: 1px solid #e0e0e0;
+            background: var(--input-bg);
+            border-top: 1px solid var(--border-color);
         }
 
         .input-wrapper {
@@ -229,16 +284,17 @@
         #userInput {
             flex: 1;
             padding: 12px 15px;
-            border: 2px solid #667eea;
+            border: 2px solid var(--border-color);
             border-radius: 25px;
             font-size: 14px;
             outline: none;
-            transition: all 0.3s;
+            background: var(--input-bg);
+            color: var(--text-primary);
         }
 
         #userInput:focus {
-            border-color: #764ba2;
-            box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.1);
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
         #sendBtn {
@@ -308,7 +364,8 @@
         }
 
         .limit-modal {
-            background: white;
+            background: var(--bg-message);
+            color: var(--text-primary);
             padding: 40px;
             border-radius: 20px;
             text-align: center;
@@ -322,7 +379,7 @@
         }
 
         .limit-modal p {
-            color: #666;
+            color: var(--text-secondary);
             margin-bottom: 20px;
         }
 
@@ -346,6 +403,11 @@
                 <div class="user-info">👋 Welcome, {{ username }}!</div>
             </div>
             <div class="header-right">
+                <!-- Dark Mode Toggle -->
+                <div class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+                    <div class="theme-toggle-slider">☀️</div>
+                </div>
+
                 {% if is_premium %}
                     <div class="premium-badge">
                         ⭐ PREMIUM
@@ -417,6 +479,31 @@
     <script>
         let timeRemaining = {{ time_remaining }};
         let timerInterval;
+
+        // Dark Mode Functions
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            // Update toggle icon
+            const slider = document.querySelector('.theme-toggle-slider');
+            slider.textContent = newTheme === 'dark' ? '🌙' : '☀️';
+        }
+
+        // Load saved theme
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            
+            const slider = document.querySelector('.theme-toggle-slider');
+            slider.textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+        }
+
+        // Initialize theme on page load
+        loadTheme();
 
         function updateTimerDisplay() {
             if (timeRemaining <= 0) {
