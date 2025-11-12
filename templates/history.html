@@ -63,10 +63,12 @@
             display: flex;
             gap: 10px;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .search-box {
             flex: 1;
+            min-width: 200px;
             padding: 10px 15px;
             border: 2px solid #667eea;
             border-radius: 25px;
@@ -81,10 +83,16 @@
             cursor: pointer;
             font-weight: bold;
             transition: all 0.3s;
+            font-size: 14px;
         }
 
         .btn-back {
             background: #667eea;
+            color: white;
+        }
+
+        .btn-export {
+            background: #51cf66;
             color: white;
         }
 
@@ -96,6 +104,49 @@
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Export Dropdown Menu */
+        .export-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .export-content {
+            display: none;
+            position: absolute;
+            background: white;
+            min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            border-radius: 10px;
+            z-index: 1;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .export-content.show {
+            display: block;
+        }
+
+        .export-content button {
+            width: 100%;
+            padding: 12px 16px;
+            background: white;
+            color: #333;
+            border: none;
+            text-align: left;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+            display: block;
+        }
+
+        .export-content button:hover {
+            background: #f0f0f0;
+        }
+
+        .export-content button:not(:last-child) {
+            border-bottom: 1px solid #e0e0e0;
         }
 
         .history-section {
@@ -194,6 +245,21 @@
             .search-box {
                 width: 100%;
             }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .action-bar, .delete-btn, .btn {
+                display: none !important;
+            }
         }
     </style>
 </head>
@@ -214,16 +280,19 @@
         <!-- Action Bar -->
         <div class="action-bar">
             <input type="text" class="search-box" id="searchBox" placeholder="🔍 Search conversations...">
-            <button class="btn btn-back" onclick="window.location.href='/'">← Back to Chat</button>
-            <button class="btn btn-export" onclick="exportMenu()" style="background: #51cf66;">📥 Export</button>
+            <button class="btn btn-back" onclick="window.location.href='/'">← Back</button>
+            
+            <!-- Export Dropdown -->
+            <div class="export-dropdown">
+                <button class="btn btn-export" onclick="toggleExport()">📥 Export</button>
+                <div class="export-content" id="exportMenu">
+                    <button onclick="exportAsTXT()">📄 Download as TXT</button>
+                    <button onclick="copyToClipboard()">📋 Copy to Clipboard</button>
+                    <button onclick="printChat()">🖨️ Print</button>
+                </div>
+            </div>
+            
             <button class="btn btn-clear" onclick="clearAllHistory()">🗑️ Clear All</button>
-        </div>
-
-        <!-- Export Menu -->
-        <div class="export-menu" id="exportMenu" style="display: none;">
-            <button onclick="exportAsTXT()">📄 Download as TXT</button>
-            <button onclick="copyToClipboard()">📋 Copy to Clipboard</button>
-            <button onclick="printChat()">🖨️ Print</button>
         </div>
 
         <!-- Chat History -->
@@ -262,6 +331,21 @@
     </div>
 
     <script>
+        // Close export menu when clicking outside
+        window.onclick = function(event) {
+            if (!event.target.matches('.btn-export')) {
+                const dropdown = document.getElementById('exportMenu');
+                if (dropdown.classList.contains('show')) {
+                    dropdown.classList.remove('show');
+                }
+            }
+        }
+
+        // Toggle Export Menu
+        function toggleExport() {
+            document.getElementById('exportMenu').classList.toggle('show');
+        }
+
         // Search functionality
         const searchBox = document.getElementById('searchBox');
         searchBox.addEventListener('input', function(e) {
@@ -304,7 +388,7 @@
 
         // Clear all history
         function clearAllHistory() {
-            if (confirm('⚠️ Are you sure you want to delete ALL chat history? This cannot be undone!')) {
+            if (confirm('⚠️ Delete ALL chat history? This cannot be undone!')) {
                 fetch('/api/clear-history', {
                     method: 'POST',
                     headers: {
@@ -314,7 +398,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert('✅ ' + data.message);
+                        alert('✅ Chat history cleared!');
                         location.reload();
                     } else {
                         alert('❌ Error clearing history!');
@@ -325,6 +409,79 @@
                     alert('❌ Error clearing history!');
                 });
             }
+        }
+
+        // Export as TXT
+        function exportAsTXT() {
+            let content = 'ARIA AI - Chat History Export\n';
+            content += '================================\n\n';
+            content += `Exported on: ${new Date().toLocaleString()}\n`;
+            content += `Total Messages: {{ total_chats }}\n\n`;
+            
+            const sections = document.querySelectorAll('.history-section');
+            sections.forEach(section => {
+                const date = section.querySelector('.date-header').textContent.trim();
+                content += `\n${date}\n${'='.repeat(date.length)}\n\n`;
+                
+                const items = section.querySelectorAll('.chat-item');
+                items.forEach(item => {
+                    const sender = item.querySelector('.chat-sender').textContent.trim();
+                    const message = item.querySelector('.chat-content').textContent.trim();
+                    const time = item.querySelector('.chat-meta span').textContent.trim();
+                    
+                    content += `${sender} ${time}\n`;
+                    content += `${message}\n\n`;
+                    content += '-'.repeat(50) + '\n\n';
+                });
+            });
+            
+            // Create download
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `aria-chat-history-${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            // Close menu
+            document.getElementById('exportMenu').classList.remove('show');
+            alert('✅ Chat history downloaded!');
+        }
+
+        // Copy to Clipboard
+        function copyToClipboard() {
+            let content = 'ARIA AI - Chat History\n========================\n\n';
+            
+            const sections = document.querySelectorAll('.history-section');
+            sections.forEach(section => {
+                const date = section.querySelector('.date-header').textContent.trim();
+                content += `${date}\n\n`;
+                
+                const items = section.querySelectorAll('.chat-item');
+                items.forEach(item => {
+                    const sender = item.querySelector('.chat-sender').textContent.trim();
+                    const message = item.querySelector('.chat-content').textContent.trim();
+                    content += `${sender}: ${message}\n\n`;
+                });
+            });
+            
+            navigator.clipboard.writeText(content).then(() => {
+                // Close menu
+                document.getElementById('exportMenu').classList.remove('show');
+                alert('✅ Chat history copied to clipboard!');
+            }).catch(err => {
+                alert('❌ Failed to copy to clipboard');
+                console.error('Error:', err);
+            });
+        }
+
+        // Print Chat
+        function printChat() {
+            document.getElementById('exportMenu').classList.remove('show');
+            window.print();
         }
     </script>
 </body>

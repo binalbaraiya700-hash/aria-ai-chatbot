@@ -545,7 +545,7 @@
             
             if (!message) return;
             
-            if (timeRemaining <= 0 && !{{ 'true' if is_premium else 'false' }}) {
+            if (timeRemaining <= 0 && !{{ 'true'  if is_premium else 'false' }}) {
                 document.getElementById('limitOverlay').style.display = 'flex';
                 return;
             }
