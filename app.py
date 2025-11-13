@@ -2,7 +2,6 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for
 from flask_cors import CORS
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
 import google.generativeai as genai
 from dotenv import load_dotenv
@@ -26,7 +25,6 @@ ADMIN_EMAILS = ['binalbaraiya700@gmail.com']
 
 # Initialize extensions
 db = SQLAlchemy(app)
-migrate = Migrate(app, db)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -41,6 +39,12 @@ razorpay_client = razorpay.Client(auth=(
 api_key = os.getenv('GEMINI_API_KEY')
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-2.0-flash')
+
+# Image generation model
+try:
+    image_model = genai.GenerativeModel('gemini-2.0-flash-exp-image-generation')
+except:
+    image_model = None  # Fallback if model not available
 
 # ==================== DATABASE MODELS ====================
 
@@ -164,98 +168,65 @@ def home():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        try:
-            data = request.get_json()
-            username = data.get('username')
-            email = data.get('email')
-            password = data.get('password')
-            
-            # Quick validation
-            if not username or not email or not password:
-                return jsonify({'error': 'All fields required'}), 400
-            
-            # Check existing (single query)
-            existing = User.query.filter(
-                (User.email == email) | (User.username == username)
-            ).first()
-            
-            if existing:
-                if existing.email == email:
-                    return jsonify({'error': 'Email already exists'}), 400
-                else:
-                    return jsonify({'error': 'Username already exists'}), 400
-            
-            # Faster hashing with fewer iterations
-            hashed_password = generate_password_hash(
-                password, 
-                method='pbkdf2:sha256', 
-                salt_length=8
-            )
-            
-            # Check early bird status
-            total_users = User.query.count()
-            signup_number = total_users + 1
-            is_early_bird = signup_number <= 50
-            
-            new_user = User(
-                username=username,
-                email=email,
-                password=hashed_password,
-                signup_number=signup_number,
-                is_early_bird=is_early_bird,
-                last_reset_date=date.today()
-            )
-            
-            db.session.add(new_user)
-            db.session.commit()
-            
-            return jsonify({
-                'success': True,
-                'is_early_bird': is_early_bird,
-                'signup_number': signup_number
-            })
+        data = request.get_json()
+        username = data.get('username')
+        email = data.get('email')
+        password = data.get('password')
         
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({'error': str(e)}), 500
+        if User.query.filter_by(email=email).first():
+            return jsonify({'error': 'Email already exists'}), 400
+        
+        if User.query.filter_by(username=username).first():
+            return jsonify({'error': 'Username already exists'}), 400
+        
+        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+        
+        total_users = User.query.count()
+        signup_number = total_users + 1
+        is_early_bird = signup_number <= 50
+        
+        new_user = User(
+            username=username,
+            email=email,
+            password=hashed_password,
+            signup_number=signup_number,
+            is_early_bird=is_early_bird,
+            last_reset_date=date.today()
+        )
+        
+        db.session.add(new_user)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'is_early_bird': is_early_bird,
+            'signup_number': signup_number
+        })
     
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        try:
-            data = request.get_json()
-            email = data.get('email')
-            password = data.get('password')
-            
-            if not email or not password:
-                return jsonify({'error': 'All fields required'}), 400
-            
-            user = User.query.filter_by(email=email).first()
-            
-            if user and check_password_hash(user.password, password):
-                login_user(user, remember=True, duration=timedelta(days=7))
-                return jsonify({'success': True})
-            
-            return jsonify({'error': 'Invalid credentials'}), 401
+        data = request.get_json()
+        email = data.get('email')
+        password = data.get('password')
         
-        except Exception as e:
-            return jsonify({'error': 'Login failed'}), 500
+        user = User.query.filter_by(email=email).first()
+        
+        if user and check_password_hash(user.password, password):
+            login_user(user)
+            return jsonify({'success': True})
+        
+        return jsonify({'error': 'Invalid credentials'}), 401
     
     return render_template('login.html')
 
-
-@app.route("/reset-db-secret", methods=["GET"])
-def reset_db_secret():
-    try:
-        from app import db
-        db.drop_all()
-        db.create_all()
-        return "✅ Database reset successfully!", 200
-    except Exception as e:
-        return f"❌ Error: {e}", 500
-
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
 
 # ==================== CHAT API ====================
 
@@ -313,8 +284,61 @@ def chat():
         })
         
     except Exception as e:
-        db.session.rollback()
         return jsonify({'response': f'Error: {str(e)}'}), 500
+
+# ==================== IMAGE GENERATION ====================
+
+@app.route('/generate-image', methods=['POST'])
+@login_required
+def generate_image():
+    """Generate images using Gemini"""
+    try:
+        data = request.json
+        prompt = data.get('prompt')
+        
+        # Check time limit
+        reset_daily_limit(current_user)
+        time_remaining = get_time_remaining(current_user)
+        
+        if time_remaining <= 0 and not current_user.is_premium:
+            return jsonify({
+                'error': 'Daily limit reached! Upgrade to Premium.',
+                'limit_reached': True
+            }), 403
+        
+        if not image_model:
+            return jsonify({
+                'error': 'Image generation not available. Please upgrade Gemini API access.'
+            }), 400
+        
+        # Generate image using Gemini
+        response = image_model.generate_content(prompt)
+        
+        # Extract image data
+        # Note: Actual implementation depends on Gemini's response format
+        # This is a placeholder - adjust based on actual API response
+        
+        image_url = "https://via.placeholder.com/512x512.png?text=Generated+Image"  # Placeholder
+        
+        # Save to message history
+        msg = Message(
+            user_id=current_user.id,
+            message=f"Generated image: {prompt}",
+            is_user=False,
+            media_type='image',
+            media_url=image_url
+        )
+        db.session.add(msg)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'image_url': image_url,
+            'prompt': prompt
+        })
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # ==================== PAYMENT ROUTES ====================
 
@@ -474,42 +498,69 @@ def make_premium(user_id):
 
 if __name__ == '__main__':
     with app.app_context():
-        # Create tables if not exist
+        # Create tables
         db.create_all()
         
-        # Add missing columns to existing tables
+        # Database migration for existing tables
         try:
-            from sqlalchemy import inspect, text
-            inspector = inspect(db.engine)
+            from sqlalchemy import text
             
-            # Check if new columns exist in User table
-            user_columns = [col['name'] for col in inspector.get_columns('user')]
-            
-            # Add missing columns
+            # Get existing columns
             with db.engine.connect() as conn:
-                if 'is_early_bird' not in user_columns:
-                    conn.execute(text('ALTER TABLE user ADD COLUMN is_early_bird BOOLEAN DEFAULT 0'))
+                # Check and add missing columns
+                try:
+                    conn.execute(text("SELECT is_early_bird FROM user LIMIT 1"))
+                except:
+                    conn.execute(text("ALTER TABLE user ADD COLUMN is_early_bird BOOLEAN DEFAULT 0"))
                     conn.commit()
+                    print("✅ Added is_early_bird column")
                 
-                if 'signup_number' not in user_columns:
-                    conn.execute(text('ALTER TABLE user ADD COLUMN signup_number INTEGER'))
+                try:
+                    conn.execute(text("SELECT signup_number FROM user LIMIT 1"))
+                except:
+                    conn.execute(text("ALTER TABLE user ADD COLUMN signup_number INTEGER"))
                     conn.commit()
+                    print("✅ Added signup_number column")
                 
-                if 'daily_chat_seconds' not in user_columns:
-                    conn.execute(text('ALTER TABLE user ADD COLUMN daily_chat_seconds INTEGER DEFAULT 0'))
+                try:
+                    conn.execute(text("SELECT daily_chat_seconds FROM user LIMIT 1"))
+                except:
+                    conn.execute(text("ALTER TABLE user ADD COLUMN daily_chat_seconds INTEGER DEFAULT 0"))
                     conn.commit()
+                    print("✅ Added daily_chat_seconds column")
                 
-                if 'last_reset_date' not in user_columns:
-                    conn.execute(text('ALTER TABLE user ADD COLUMN last_reset_date DATE'))
+                try:
+                    conn.execute(text("SELECT last_reset_date FROM user LIMIT 1"))
+                except:
+                    conn.execute(text("ALTER TABLE user ADD COLUMN last_reset_date DATE"))
                     conn.commit()
+                    print("✅ Added last_reset_date column")
                 
-                if 'total_chat_seconds' not in user_columns:
-                    conn.execute(text('ALTER TABLE user ADD COLUMN total_chat_seconds INTEGER DEFAULT 0'))
+                try:
+                    conn.execute(text("SELECT total_chat_seconds FROM user LIMIT 1"))
+                except:
+                    conn.execute(text("ALTER TABLE user ADD COLUMN total_chat_seconds INTEGER DEFAULT 0"))
                     conn.commit()
-            
-            print("✅ Database migration completed!")
+                    print("✅ Added total_chat_seconds column")
+                
+                try:
+                    conn.execute(text("SELECT media_type FROM message LIMIT 1"))
+                except:
+                    conn.execute(text("ALTER TABLE message ADD COLUMN media_type VARCHAR(20) DEFAULT 'text'"))
+                    conn.commit()
+                    print("✅ Added media_type column")
+                
+                try:
+                    conn.execute(text("SELECT media_url FROM message LIMIT 1"))
+                except:
+                    conn.execute(text("ALTER TABLE message ADD COLUMN media_url VARCHAR(500)"))
+                    conn.commit()
+                    print("✅ Added media_url column")
+                
+            print("✅ Database migration completed successfully!")
         except Exception as e:
-            print(f"⚠️ Migration error (safe to ignore if fresh DB): {e}")
+            print(f"⚠️ Migration warning: {e}")
+            print("(Safe to ignore if fresh database)")
     
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
