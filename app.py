@@ -422,13 +422,101 @@ def payment_success():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# ==================== PROFILE ROUTES ====================
+
+@app.route('/profile')
+@login_required
+def profile():
+    """User profile page with stats"""
+    total_messages = current_user.messages.count()
+    total_time_spent = format_time(current_user.total_chat_seconds)
+    
+    # Get message stats by category
+    categories_stats = db.session.query(
+        Message.media_type,
+        db.func.count(Message.id)
+    ).filter_by(user_id=current_user.id).group_by(Message.media_type).all()
+    
+    # Calculate streak (days used)
+    days_used = db.session.query(
+        db.func.count(db.func.distinct(db.func.date(Message.timestamp)))
+    ).filter_by(user_id=current_user.id).scalar() or 0
+    
+    return render_template('profile.html',
+                         user=current_user,
+                         total_messages=total_messages,
+                         total_time_spent=total_time_spent,
+                         days_used=days_used,
+                         categories_stats=categories_stats)
+
+@app.route('/api/update-profile', methods=['POST'])
+@login_required
+def update_profile():
+    """Update user profile"""
+    try:
+        data = request.json
+        
+        if 'username' in data:
+            new_username = data['username'].strip()
+            if new_username and new_username != current_user.username:
+                if User.query.filter_by(username=new_username).first():
+                    return jsonify({'error': 'Username already taken'}), 400
+                current_user.username = new_username
+        
+        if 'email' in data:
+            new_email = data['email'].strip()
+            if new_email and new_email != current_user.email:
+                if User.query.filter_by(email=new_email).first():
+                    return jsonify({'error': 'Email already taken'}), 400
+                current_user.email = new_email
+        
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Profile updated!'})
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/change-password', methods=['POST'])
+@login_required
+def change_password():
+    """Change user password"""
+    try:
+        data = request.json
+        current_password = data.get('current_password')
+        new_password = data.get('new_password')
+        
+        if not check_password_hash(current_user.password, current_password):
+            return jsonify({'error': 'Current password is incorrect'}), 400
+        
+        current_user.password = generate_password_hash(new_password, method='pbkdf2:sha256')
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Password changed successfully!'})
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
 # ==================== HISTORY ROUTES ====================
 
 @app.route('/history')
 @login_required
 def chat_history():
-    # Optimized query with limit
-    messages = current_user.messages.order_by(Message.timestamp.desc()).limit(500).all()
+    # Get category filter
+    category = request.args.get('category', 'all')
+    search = request.args.get('search', '').strip()
+    
+    # Build query
+    query = current_user.messages.order_by(Message.timestamp.desc())
+    
+    if category != 'all':
+        query = query.filter_by(media_type=category)
+    
+    if search:
+        query = query.filter(Message.message.like(f'%{search}%'))
+    
+    messages = query.limit(500).all()
     
     from collections import defaultdict
     grouped_messages = defaultdict(list)
@@ -443,7 +531,9 @@ def chat_history():
                          grouped_messages=dict(grouped_messages),
                          total_chats=total_chats,
                          total_time=total_time,
-                         username=current_user.username)
+                         username=current_user.username,
+                         current_category=category,
+                         search_query=search)
 
 @app.route('/api/delete-chat/<int:message_id>', methods=['POST'])
 @login_required
