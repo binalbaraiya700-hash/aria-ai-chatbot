@@ -3,106 +3,397 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pilot Registration - Aria Aviation Platform</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>Register - Aria Aviation Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            overflow: hidden;
+            background: 
+                linear-gradient(rgba(5, 10, 25, 0.15), rgba(5, 10, 25, 0.25)),
+                url('{{ url_for("static", filename="images/cockpit-background.jpg.png") }}') center center/cover no-repeat fixed;
+            position: relative;
+        }
+
+        .register-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 360px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 26px 22px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(22px) saturate(180%);
+            -webkit-backdrop-filter: blur(22px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 20px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 1px rgba(255, 255, 255, 0.1);
+            z-index: 10;
+        }
+
+        .register-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .register-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .register-container::-webkit-scrollbar-thumb {
+            background: rgba(0, 212, 255, 0.3);
+            border-radius: 10px;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 34px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00d4ff, #0099ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+            margin-bottom: 6px;
+        }
+
+        .logo p {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.7);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        h2 {
+            color: white;
+            font-size: 17px;
+            text-align: center;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .error-message, .success-message {
+            display: none;
+            padding: 9px;
+            border-radius: 8px;
+            font-size: 11px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .error-message {
+            background: rgba(255, 82, 82, 0.15);
+            border: 1px solid rgba(255, 82, 82, 0.4);
+            color: #ff5252;
+        }
+
+        .success-message {
+            background: rgba(76, 175, 80, 0.15);
+            border: 1px solid rgba(76, 175, 80, 0.4);
+            color: #4caf50;
+        }
+
+        .input-group {
+            margin-bottom: 12px;
+        }
+
+        .input-group label {
+            display: block;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 10px;
+            margin-bottom: 5px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 10px 13px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1.5px solid rgba(255, 255, 255, 0.2);
+            border-radius: 9px;
+            color: white;
+            font-size: 11px;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .input-group select {
+            cursor: pointer;
+        }
+
+        .input-group select option {
+            background: #1a1a2e;
+            color: white;
+        }
+
+        .input-group input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(0, 212, 255, 0.6);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+        }
+
+        .register-button {
+            width: 100%;
+            padding: 11px;
+            background: linear-gradient(135deg, #00d4ff, #0099ff);
+            border: none;
+            border-radius: 9px;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            box-shadow: 0 4px 15px rgba(0, 153, 255, 0.3);
+        }
+
+        .register-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 153, 255, 0.5);
+        }
+
+        .register-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 11px;
+            margin-top: 10px;
+        }
+
+        .loading-dots span {
+            animation: blink 1.4s infinite;
+        }
+
+        .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes blink {
+            0%, 20% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+
+        .footer-links {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 10px;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: #00d4ff;
+        }
+
+        .hud-element {
+            position: fixed;
+            color: rgba(0, 212, 255, 0.6);
+            font-family: 'Orbitron', monospace;
+            font-size: 9px;
+            padding: 7px 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 5px;
+            backdrop-filter: blur(5px);
+            z-index: 5;
+        }
+
+        .hud-top-left { top: 15px; left: 15px; }
+        .hud-top-right { top: 15px; right: 15px; }
+
+        @media (max-width: 768px) {
+            .register-container {
+                width: 90%;
+                max-width: 380px;
+                padding: 22px 18px;
+            }
+
+            .hud-element {
+                font-size: 7px;
+                padding: 5px 7px;
+            }
+
+            .hud-top-left, .hud-top-right { top: 8px; }
+            .hud-top-left { left: 8px; }
+            .hud-top-right { right: 8px; }
+        }
+    </style>
 </head>
 <body>
-    <div class="cockpit-frame"></div>
-    <div class="particles" id="particles"></div>
-
     <div class="hud-element hud-top-left">
-        SYSTEM STATUS: ONLINE<br>
-        NEW PILOT REGISTRATION
+        NEW PILOT<br>
+        REGISTRATION
+    </div>
+    <div class="hud-element hud-top-right">
+        SYSTEM: READY<br>
+        STATUS: ACTIVE
     </div>
 
-    <div class="login-container">
-        <header class="logo">
+    <div class="register-container">
+        <div class="logo">
             <h1>ARIA</h1>
             <p>Aviation Intelligence Platform</p>
-        </header>
+        </div>
 
-        <div class="login-box">
-            <h2>🛩️ Crew Manifest Registration</h2>
-            
-            <div id="errorMessage" class="error-message"></div>
+        <h2>🚀 Crew Member Registration</h2>
 
-            <form id="registerForm">
-                <div class="input-group">
-                    <label for="username">Pilot Name</label>
-                    <input type="text" id="username" name="username" placeholder="Your full name" required>
-                    <div class="input-glow"></div>
-                </div>
+        <div id="errorMessage" class="error-message"></div>
+        <div id="successMessage" class="success-message"></div>
 
-                <div class="input-group">
-                    <label for="email">Pilot ID / Email</label>
-                    <input type="email" id="email" name="email" placeholder="your.email@aviation.com" required>
-                    <div class="input-glow"></div>
-                </div>
-
-                <div class="input-group">
-                    <label for="password">Access Code</label>
-                    <input type="password" id="password" name="password" placeholder="Create secure password" required minlength="6">
-                    <div class="input-glow"></div>
-                </div>
-
-                <button type="submit" class="login-button">
-                    <span class="icon">🚀</span> Create Flight Manifest
-                </button>
-
-                <div class="loading" id="loading">
-                    <div class="loading-dots">
-                        Creating manifest<span>.</span><span>.</span><span>.</span>
-                    </div>
-                </div>
-            </form>
-
-            <div class="footer-links">
-                Already have clearance? <a href="/login">Login here</a>
+        <div id="registerForm">
+            <div class="input-group">
+                <label for="username">Pilot Name *</label>
+                <input type="text" id="username" placeholder="Enter full name" required>
             </div>
+
+            <div class="input-group">
+                <label for="email">Email Address *</label>
+                <input type="email" id="email" placeholder="your.email@aviation.com" required>
+            </div>
+
+            <div class="input-group">
+                <label for="password">Security Code *</label>
+                <input type="password" id="password" placeholder="Create strong password" required>
+            </div>
+
+            <div class="input-group">
+                <label for="confirmPassword">Confirm Security Code *</label>
+                <input type="password" id="confirmPassword" placeholder="Re-enter password" required>
+            </div>
+
+            <div class="input-group">
+                <label for="experience">Experience Level</label>
+                <select id="experience">
+                    <option value="beginner">Student Pilot</option>
+                    <option value="intermediate">Private Pilot</option>
+                    <option value="advanced">Commercial Pilot</option>
+                    <option value="expert">Airline Transport Pilot</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="interest">Primary Interest</label>
+                <select id="interest">
+                    <option value="aviation">Aviation Career</option>
+                    <option value="engineering">Aeronautical Engineering</option>
+                    <option value="training">Flight Training</option>
+                    <option value="general">General Knowledge</option>
+                </select>
+            </div>
+
+            <button type="button" class="register-button" onclick="handleRegister()">
+                <span>✈️</span> Complete Registration
+            </button>
+
+            <div class="loading" id="loading">
+                <div class="loading-dots">
+                    Creating Account<span>.</span><span>.</span><span>.</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-links">
+            Already have an account? <a href="/login">Sign In</a>
         </div>
     </div>
 
     <script>
-        // Particles
-        const particlesContainer = document.getElementById('particles');
-        for (let i = 0; i < 30; i++) {
-            const particle = document.createElement('div');
-            particle.className = 'particle';
-            particle.style.left = Math.random() * 100 + '%';
-            particle.style.animationDelay = Math.random() * 15 + 's';
-            particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
-            particlesContainer.appendChild(particle);
-        }
-
-        // Register form
-        document.getElementById('registerForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
+        async function handleRegister() {
             const username = document.getElementById('username').value;
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const experience = document.getElementById('experience').value;
+            const interest = document.getElementById('interest').value;
+            
             const loadingDiv = document.getElementById('loading');
             const errorDiv = document.getElementById('errorMessage');
-            const submitBtn = document.querySelector('.login-button');
+            const successDiv = document.getElementById('successMessage');
+            const submitBtn = document.querySelector('.register-button');
             
             errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+            
+            if (!username || !email || !password || !confirmPassword) {
+                errorDiv.textContent = 'Please fill all required fields';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                errorDiv.textContent = 'Passwords do not match';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            if (password.length < 6) {
+                errorDiv.textContent = 'Password must be at least 6 characters';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
             loadingDiv.style.display = 'block';
             submitBtn.disabled = true;
             
             try {
                 const response = await fetch('/register', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ username, email, password })
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        username, 
+                        email, 
+                        password,
+                        experience,
+                        interest
+                    })
                 });
                 
                 const data = await response.json();
                 
                 if (data.success) {
-                    window.location.href = data.redirect;
+                    successDiv.textContent = 'Registration successful! Redirecting...';
+                    successDiv.style.display = 'block';
+                    loadingDiv.style.display = 'none';
+                    
+                    setTimeout(() => {
+                        window.location.href = data.redirect || '/login';
+                    }, 1500);
                 } else {
                     errorDiv.textContent = data.error || 'Registration failed';
                     errorDiv.style.display = 'block';
@@ -115,6 +406,10 @@
                 loadingDiv.style.display = 'none';
                 submitBtn.disabled = false;
             }
+        }
+
+        document.getElementById('confirmPassword').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleRegister();
         });
     </script>
 </body>

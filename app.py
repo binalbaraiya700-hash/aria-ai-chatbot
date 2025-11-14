@@ -3,6 +3,7 @@ from flask_cors import CORS
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta, date
 import google.generativeai as genai
 from dotenv import load_dotenv
@@ -11,14 +12,20 @@ import razorpay
 import json
 from io import BytesIO
 import PyPDF2
+import base64
+from PIL import Image
+import requests
 
 load_dotenv()
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-here')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'aria-aviation-secret-2025')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///aviation_db.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
+app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB
+
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 db = SQLAlchemy(app)
 CORS(app)
@@ -27,15 +34,18 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-# Gemini API Setup
+# Gemini API
 genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
-model = genai.GenerativeModel('gemini-pro')
+chat_model = genai.GenerativeModel('gemini-2.0-flash-exp')
+vision_model = genai.GenerativeModel('gemini-2.0-flash-exp')
 
-# Razorpay Setup
+# Razorpay
 razorpay_client = razorpay.Client(auth=(
     os.getenv('RAZORPAY_KEY_ID'),
     os.getenv('RAZORPAY_KEY_SECRET')
 ))
+
+ADMIN_EMAILS = ['binalbaraiya700@gmail.com']
 
 # ==================== MODELS ====================
 class User(UserMixin, db.Model):
@@ -44,19 +54,18 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     is_premium = db.Column(db.Boolean, default=False)
-    premium_expiry = db.Column(db.DateTime, nullable=True)
     premium_price = db.Column(db.Integer, default=121)
     is_early_bird = db.Column(db.Boolean, default=False)
-    signup_number = db.Column(db.Integer, nullable=True)
+    signup_number = db.Column(db.Integer)
     daily_chat_seconds = db.Column(db.Integer, default=0)
-    last_reset_date = db.Column(db.Date, nullable=True)
+    last_reset_date = db.Column(db.Date)
     total_chat_seconds = db.Column(db.Integer, default=0)
     xp = db.Column(db.Integer, default=0)
     level = db.Column(db.Integer, default=1)
     streak_days = db.Column(db.Integer, default=0)
-    last_chat_date = db.Column(db.Date, nullable=True)
+    last_chat_date = db.Column(db.Date)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    messages = db.relationship('Message', backref='user', lazy=True, cascade='all, delete-orphan')
+    messages = db.relationship('Message', backref='user', lazy=True)
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -64,32 +73,44 @@ class Message(db.Model):
     message = db.Column(db.Text, nullable=False)
     is_user = db.Column(db.Boolean, nullable=False)
     category = db.Column(db.String(50), default='general')
-    duration_seconds = db.Column(db.Integer, default=0)
+    has_media = db.Column(db.Boolean, default=False)
+    media_type = db.Column(db.String(20))
+    media_url = db.Column(db.String(500))
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+class AircraftDiagram(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    category = db.Column(db.String(100))
+    description = db.Column(db.Text)
+    image_url = db.Column(db.String(500))
+    components = db.Column(db.Text)  # JSON
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class LearningModule(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    subject = db.Column(db.String(100))  # aerodynamics, structures, etc
+    content = db.Column(db.Text)
+    video_url = db.Column(db.String(500))
+    difficulty = db.Column(db.String(20))  # beginner, intermediate, advanced
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Payment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    amount = db.Column(db.Integer, nullable=False)
-    razorpay_order_id = db.Column(db.String(100), nullable=False)
-    razorpay_payment_id = db.Column(db.String(100), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    amount = db.Column(db.Integer)
+    razorpay_order_id = db.Column(db.String(100))
+    razorpay_payment_id = db.Column(db.String(100))
     status = db.Column(db.String(20), default='created')
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
-class Document(db.Model):
+class Screenshot(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    filename = db.Column(db.String(200), nullable=False)
-    content = db.Column(db.Text, nullable=False)
-    upload_date = db.Column(db.DateTime, default=datetime.utcnow)
-
-class ScheduledMessage(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    message = db.Column(db.Text, nullable=False)
-    scheduled_time = db.Column(db.DateTime, nullable=False)
-    is_sent = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    image_data = db.Column(db.Text)  # base64
+    analysis = db.Column(db.Text)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 with app.app_context():
     db.create_all()
@@ -108,49 +129,29 @@ def reset_daily_limit(user):
 
 def get_time_remaining(user):
     if user.is_premium:
-        return 9999999
+        return 999999
     return max(0, 1200 - user.daily_chat_seconds)
 
-def format_time(seconds):
-    minutes = seconds // 60
-    secs = seconds % 60
-    return f"{minutes:02d}:{secs:02d}"
-
-def update_xp_and_level(user, xp_gain=5):
-    user.xp += xp_gain
+def update_xp(user, amount=5):
+    user.xp += amount
     new_level = (user.xp // 50) + 1
-    if new_level > user.level:
-        user.level = new_level
-        return True
-    return False
+    leveled_up = new_level > user.level
+    user.level = new_level
+    db.session.commit()
+    return leveled_up
 
 def update_streak(user):
     today = date.today()
     if user.last_chat_date:
-        days_diff = (today - user.last_chat_date).days
-        if days_diff == 1:
+        diff = (today - user.last_chat_date).days
+        if diff == 1:
             user.streak_days += 1
-        elif days_diff > 1:
+        elif diff > 1:
             user.streak_days = 1
     else:
         user.streak_days = 1
     user.last_chat_date = today
-
-def get_badges(user):
-    badges = []
-    if user.is_premium:
-        badges.append({"name": "Premium", "icon": "⭐", "desc": "Premium Member"})
-    if user.is_early_bird:
-        badges.append({"name": "Early Bird", "icon": "🔥", "desc": "First 50 Users"})
-    if user.level >= 5:
-        badges.append({"name": "Expert", "icon": "🎓", "desc": "Reached Level 5"})
-    if user.level >= 10:
-        badges.append({"name": "Master", "icon": "👑", "desc": "Reached Level 10"})
-    if user.streak_days >= 7:
-        badges.append({"name": "Consistent", "icon": "🔥", "desc": "7 Day Streak"})
-    if user.streak_days >= 30:
-        badges.append({"name": "Dedicated", "icon": "💎", "desc": "30 Day Streak"})
-    return badges
+    db.session.commit()
 
 # ==================== ROUTES ====================
 @app.route('/')
@@ -158,18 +159,21 @@ def get_badges(user):
 def home():
     reset_daily_limit(current_user)
     time_remaining = get_time_remaining(current_user)
-    is_admin = current_user.email == 'binalbaraiya700@gmail.com'
-    badges = get_badges(current_user)
-    return render_template('index.html', 
-                         time_remaining=format_time(time_remaining),
+    is_admin = current_user.email in ADMIN_EMAILS
+    
+    minutes = time_remaining // 60
+    seconds = time_remaining % 60
+    time_display = f"{minutes:02d}:{seconds:02d}"
+    
+    return render_template('dashboard.html',
                          user=current_user,
-                         is_admin=is_admin,
-                         badges=badges)
+                         time_remaining=time_display,
+                         is_admin=is_admin)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        data = request.get_json()
+        data = request.json
         username = data.get('username')
         email = data.get('email')
         password = data.get('password')
@@ -179,43 +183,36 @@ def register():
         
         user_count = User.query.count()
         is_early_bird = user_count < 50
-        premium_price = 89 if is_early_bird else 121
         
-        hashed_password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=8)
-        
-        new_user = User(
+        user = User(
             username=username,
             email=email,
-            password=hashed_password,
+            password=generate_password_hash(password),
             signup_number=user_count + 1,
             is_early_bird=is_early_bird,
-            premium_price=premium_price,
+            premium_price=89 if is_early_bird else 121,
             last_reset_date=date.today()
         )
         
-        try:
-            db.session.add(new_user)
-            db.session.commit()
-            return jsonify({'success': True, 'message': 'Account created successfully!'}), 201
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({'error': str(e)}), 500
+        db.session.add(user)
+        db.session.commit()
+        
+        return jsonify({'success': True}), 201
     
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        data = request.get_json()
+        data = request.json
         email = data.get('email')
         password = data.get('password')
-        remember = data.get('remember', True)
         
         user = User.query.filter_by(email=email).first()
         
         if user and check_password_hash(user.password, password):
-            login_user(user, remember=remember, duration=timedelta(days=30))
-            return jsonify({'success': True}), 200
+            login_user(user, remember=True)
+            return jsonify({'success': True})
         
         return jsonify({'error': 'Invalid credentials'}), 401
     
@@ -230,192 +227,145 @@ def logout():
 @app.route('/chat', methods=['POST'])
 @login_required
 def chat():
-    start_time = datetime.utcnow()
-    
-    reset_daily_limit(current_user)
-    time_remaining = get_time_remaining(current_user)
-    
-    if time_remaining <= 0 and not current_user.is_premium:
-        return jsonify({
-            'response': '⏰ Daily 20-minute limit reached! Upgrade to Premium for unlimited chat time. ⭐',
-            'limit_reached': True
-        })
-    
-    data = request.get_json()
-    user_message = data.get('message')
-    category = data.get('category', 'general')
-    
     try:
-        user_msg = Message(
-            user_id=current_user.id, 
-            message=user_message, 
-            is_user=True,
-            category=category
-        )
-        db.session.add(user_msg)
+        data = request.json
+        user_message = data.get('message')
+        category = data.get('category', 'general')
         
-        response = model.generate_content(user_message)
+        reset_daily_limit(current_user)
+        time_remaining = get_time_remaining(current_user)
+        
+        if time_remaining <= 0:
+            return jsonify({
+                'error': 'Daily limit reached!',
+                'limit_reached': True
+            }), 403
+        
+        # Generate AI response
+        response = chat_model.generate_content(user_message)
         ai_response = response.text
         
-        end_time = datetime.utcnow()
-        duration = int((end_time - start_time).total_seconds())
+        # Save messages
+        user_msg = Message(user_id=current_user.id, message=user_message, is_user=True, category=category)
+        ai_msg = Message(user_id=current_user.id, message=ai_response, is_user=False, category=category)
+        
+        db.session.add(user_msg)
+        db.session.add(ai_msg)
         
         if not current_user.is_premium:
-            current_user.daily_chat_seconds += duration
-        current_user.total_chat_seconds += duration
+            current_user.daily_chat_seconds += 10
         
-        level_up = update_xp_and_level(current_user, xp_gain=5)
+        leveled_up = update_xp(current_user, 5)
         update_streak(current_user)
         
-        ai_msg = Message(
-            user_id=current_user.id,
-            message=ai_response,
-            is_user=False,
-            category=category,
-            duration_seconds=duration
-        )
-        db.session.add(ai_msg)
         db.session.commit()
-        
-        time_remaining = get_time_remaining(current_user)
         
         return jsonify({
             'response': ai_response,
-            'time_remaining': time_remaining,
-            'time_remaining_formatted': format_time(time_remaining),
-            'duration': duration,
-            'xp_gained': 5,
+            'time_remaining': get_time_remaining(current_user),
+            'level_up': leveled_up,
             'level': current_user.level,
-            'total_xp': current_user.xp,
-            'level_up': level_up,
+            'xp': current_user.xp,
             'streak': current_user.streak_days
         })
         
     except Exception as e:
-        db.session.rollback()
-        return jsonify({'response': f'Error: {str(e)}'}), 500
+        return jsonify({'error': str(e)}), 500
 
-@app.route('/upload-document', methods=['POST'])
+@app.route('/analyze-screenshot', methods=['POST'])
 @login_required
-def upload_document():
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file uploaded'}), 400
-    
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'No file selected'}), 400
-    
-    if not file.filename.endswith('.pdf'):
-        return jsonify({'error': 'Only PDF files allowed'}), 400
-    
+def analyze_screenshot():
     try:
-        pdf_reader = PyPDF2.PdfReader(BytesIO(file.read()))
-        text_content = ""
-        for page in pdf_reader.pages:
-            text_content += page.extract_text()
+        data = request.json
+        image_data = data.get('image')  # base64
         
-        doc = Document(
+        # Remove data URL prefix
+        if ',' in image_data:
+            image_data = image_data.split(',')[1]
+        
+        # Decode base64
+        image_bytes = base64.b64decode(image_data)
+        image = Image.open(BytesIO(image_bytes))
+        
+        # Save temporarily
+        temp_path = os.path.join(app.config['UPLOAD_FOLDER'], f'screenshot_{current_user.id}.png')
+        image.save(temp_path)
+        
+        # Analyze with Gemini Vision
+        with open(temp_path, 'rb') as img_file:
+            vision_response = vision_model.generate_content([
+                "Analyze this screenshot in detail. Describe what you see, identify any text, UI elements, or important information.",
+                {"mime_type": "image/png", "data": img_file.read()}
+            ])
+        
+        analysis = vision_response.text
+        
+        # Save to database
+        screenshot = Screenshot(
             user_id=current_user.id,
-            filename=file.filename,
-            content=text_content[:10000]  # Limit to 10k chars
+            image_data=image_data[:5000],  # Store preview
+            analysis=analysis
         )
-        db.session.add(doc)
+        db.session.add(screenshot)
         db.session.commit()
+        
+        os.remove(temp_path)
         
         return jsonify({
             'success': True,
-            'message': f'Document "{file.filename}" uploaded successfully!',
-            'doc_id': doc.id
-        }), 200
+            'analysis': analysis
+        })
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/ask-document', methods=['POST'])
+@app.route('/aircraft-diagrams')
 @login_required
-def ask_document():
-    data = request.get_json()
-    doc_id = data.get('doc_id')
-    question = data.get('question')
-    
-    doc = Document.query.get(doc_id)
-    if not doc or doc.user_id != current_user.id:
-        return jsonify({'error': 'Document not found'}), 404
-    
-    try:
-        prompt = f"""Based on this document content:
+def aircraft_diagrams():
+    diagrams = AircraftDiagram.query.all()
+    return render_template('aircraft_diagrams.html', diagrams=diagrams)
 
-{doc.content}
-
-Answer this question: {question}
-
-Provide a clear and concise answer based only on the document content."""
-        
-        response = model.generate_content(prompt)
-        
-        return jsonify({
-            'response': response.text,
-            'document': doc.filename
-        }), 200
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+@app.route('/learning-modules')
+@login_required
+def learning_modules():
+    modules = LearningModule.query.all()
+    return render_template('learning_modules.html', modules=modules)
 
 @app.route('/profile')
 @login_required
 def profile():
-    badges = get_badges(current_user)
-    docs = Document.query.filter_by(user_id=current_user.id).all()
-    
-    # Category-wise message count
-    categories = db.session.query(
-        Message.category,
-        db.func.count(Message.id)
-    ).filter_by(user_id=current_user.id, is_user=True).group_by(Message.category).all()
-    
-    category_stats = {cat: count for cat, count in categories}
-    
+    message_count = Message.query.filter_by(user_id=current_user.id, is_user=True).count()
     return render_template('profile.html',
                          user=current_user,
-                         badges=badges,
-                         documents=docs,
-                         category_stats=category_stats)
+                         message_count=message_count)
 
 @app.route('/history')
 @login_required
-def chat_history():
+def history():
     messages = Message.query.filter_by(user_id=current_user.id).order_by(
         Message.timestamp.desc()
-    ).all()
-    
-    from collections import defaultdict
-    grouped_messages = defaultdict(list)
-    for msg in messages:
-        date_key = msg.timestamp.strftime('%d %b %Y')
-        grouped_messages[date_key].append(msg)
-    
-    total_chats = len(messages)
-    return render_template('history.html',
-                         grouped_messages=dict(grouped_messages),
-                         total_chats=total_chats)
+    ).limit(100).all()
+    return render_template('history.html', messages=messages)
 
-@app.route('/api/delete-chat/<int:message_id>', methods=['POST'])
+@app.route('/admin')
 @login_required
-def delete_chat(message_id):
-    message = Message.query.get_or_404(message_id)
-    if message.user_id != current_user.id:
-        return jsonify({'error': 'Unauthorized'}), 403
+def admin():
+    if current_user.email not in ADMIN_EMAILS:
+        return redirect(url_for('home'))
     
-    db.session.delete(message)
-    db.session.commit()
-    return jsonify({'success': True})
-
-@app.route('/api/clear-history', methods=['POST'])
-@login_required
-def clear_history():
-    Message.query.filter_by(user_id=current_user.id).delete()
-    db.session.commit()
-    return jsonify({'success': True, 'message': 'Chat history cleared!'})
+    total_users = User.query.count()
+    premium_users = User.query.filter_by(is_premium=True).count()
+    total_messages = Message.query.count()
+    total_revenue = db.session.query(db.func.sum(Payment.amount)).filter_by(status='success').scalar() or 0
+    
+    recent_users = User.query.order_by(User.created_at.desc()).limit(10).all()
+    
+    return render_template('admin.html',
+                         total_users=total_users,
+                         premium_users=premium_users,
+                         total_messages=total_messages,
+                         total_revenue=total_revenue/100,
+                         recent_users=recent_users)
 
 @app.route('/create-order', methods=['POST'])
 @login_required
@@ -446,7 +396,7 @@ def create_order():
 @app.route('/payment-success', methods=['POST'])
 @login_required
 def payment_success():
-    data = request.get_json()
+    data = request.json
     
     payment = Payment.query.filter_by(
         razorpay_order_id=data.get('razorpay_order_id')
@@ -455,86 +405,11 @@ def payment_success():
     if payment:
         payment.razorpay_payment_id = data.get('razorpay_payment_id')
         payment.status = 'success'
-        
         current_user.is_premium = True
-        current_user.premium_expiry = datetime.utcnow() + timedelta(days=30)
-        
         db.session.commit()
-        
         return jsonify({'success': True})
     
     return jsonify({'error': 'Payment not found'}), 404
-
-@app.route('/admin')
-@login_required
-def admin():
-    if current_user.email != 'binalbaraiya700@gmail.com':
-        return redirect(url_for('home'))
-    
-    total_users = User.query.count()
-    premium_users = User.query.filter_by(is_premium=True).count()
-    early_bird_users = User.query.filter_by(is_early_bird=True).count()
-    total_revenue = db.session.query(db.func.sum(Payment.amount)).filter_by(status='success').scalar() or 0
-    
-    recent_users = User.query.order_by(User.created_at.desc()).limit(10).all()
-    recent_payments = Payment.query.order_by(Payment.timestamp.desc()).limit(10).all()
-    
-    # Daily user registration stats (last 30 days)
-    from sqlalchemy import func
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-    daily_signups = db.session.query(
-        func.date(User.created_at).label('date'),
-        func.count(User.id).label('count')
-    ).filter(User.created_at >= thirty_days_ago).group_by(func.date(User.created_at)).all()
-    
-    # Category usage stats
-    category_usage = db.session.query(
-        Message.category,
-        func.count(Message.id)
-    ).filter(Message.is_user == True).group_by(Message.category).all()
-    
-    return render_template('admin.html',
-                         total_users=total_users,
-                         premium_users=premium_users,
-                         early_bird_users=early_bird_users,
-                         total_revenue=total_revenue,
-                         recent_users=recent_users,
-                         recent_payments=recent_payments,
-                         daily_signups=daily_signups,
-                         category_usage=category_usage)
-
-@app.route('/admin/users')
-@login_required
-def admin_users():
-    if current_user.email != 'binalbaraiya700@gmail.com':
-        return redirect(url_for('home'))
-    
-    users = User.query.order_by(User.created_at.desc()).all()
-    return render_template('admin_users.html', users=users)
-
-@app.route('/admin/make-premium/<int:user_id>', methods=['POST'])
-@login_required
-def make_premium(user_id):
-    if current_user.email != 'binalbaraiya700@gmail.com':
-        return jsonify({'error': 'Unauthorized'}), 403
-    
-    user = User.query.get(user_id)
-    if user:
-        user.is_premium = True
-        user.premium_expiry = datetime.utcnow() + timedelta(days=30)
-        db.session.commit()
-        return jsonify({'success': True})
-    
-    return jsonify({'error': 'User not found'}), 404
-
-# PWA Routes
-@app.route('/static/manifest.json')
-def manifest():
-    return send_file('static/manifest.json', mimetype='application/json')
-
-@app.route('/sw.js')
-def service_worker():
-    return send_file('static/sw.js', mimetype='application/javascript')
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
