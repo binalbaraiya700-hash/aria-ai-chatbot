@@ -3,290 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Aria AI</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .register-container {
-            background: white;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            width: 100%;
-            max-width: 400px;
-            animation: fadeIn 0.5s;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .logo {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .logo h1 {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            background-clip: text;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            color: transparent;
-            font-size: 32px;
-            margin-bottom: 10px;
-        }
-
-        .logo p {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 500;
-            font-size: 14px;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 14px;
-            transition: all 0.3s;
-            outline: none;
-        }
-
-        .form-group input:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .error-message {
-            color: #ff6b6b;
-            font-size: 13px;
-            margin-top: 10px;
-            display: none;
-            padding: 10px;
-            background: rgba(255, 107, 107, 0.1);
-            border-radius: 8px;
-        }
-
-        .success-message {
-            color: #51cf66;
-            font-size: 13px;
-            margin-top: 10px;
-            display: none;
-            padding: 10px;
-            background: rgba(81, 207, 102, 0.1);
-            border-radius: 8px;
-        }
-
-        .register-btn {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        .register-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .register-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .login-link {
-            text-align: center;
-            margin-top: 20px;
-            color: #666;
-            font-size: 14px;
-        }
-
-        .login-link a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        .login-link a:hover {
-            text-decoration: underline;
-        }
-
-        .early-bird-banner {
-            background: linear-gradient(135deg, #ff6b6b, #ffd700);
-            color: white;
-            padding: 12px;
-            border-radius: 10px;
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 13px;
-            font-weight: bold;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-        }
-    </style>
+    <title>Pilot Registration - Aria Aviation Platform</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="register-container">
-        <div class="logo">
-            <h1>✈️ Aria AI</h1>
-            <p>Your Intelligent Assistant</p>
-        </div>
+    <div class="cockpit-frame"></div>
+    <div class="particles" id="particles"></div>
 
-        <div class="early-bird-banner">
-            🔥 First 50 Users: ₹89/month (3 months)
-        </div>
+    <div class="hud-element hud-top-left">
+        SYSTEM STATUS: ONLINE<br>
+        NEW PILOT REGISTRATION
+    </div>
 
-        <div id="errorMessage" class="error-message"></div>
-        <div id="successMessage" class="success-message"></div>
+    <div class="login-container">
+        <header class="logo">
+            <h1>ARIA</h1>
+            <p>Aviation Intelligence Platform</p>
+        </header>
 
-        <div class="form-group">
-            <label for="username">Username</label>
-            <input type="text" id="username" placeholder="Choose a username" required>
-        </div>
+        <div class="login-box">
+            <h2>🛩️ Crew Manifest Registration</h2>
+            
+            <div id="errorMessage" class="error-message"></div>
 
-        <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" id="email" placeholder="Enter your email" required>
-        </div>
+            <form id="registerForm">
+                <div class="input-group">
+                    <label for="username">Pilot Name</label>
+                    <input type="text" id="username" name="username" placeholder="Your full name" required>
+                    <div class="input-glow"></div>
+                </div>
 
-        <div class="form-group">
-            <label for="password">Password</label>
-            <input type="password" id="password" placeholder="Create a password" required>
-        </div>
+                <div class="input-group">
+                    <label for="email">Pilot ID / Email</label>
+                    <input type="email" id="email" name="email" placeholder="your.email@aviation.com" required>
+                    <div class="input-glow"></div>
+                </div>
 
-        <button class="register-btn" id="registerBtn" onclick="handleRegister()">Create Account</button>
+                <div class="input-group">
+                    <label for="password">Access Code</label>
+                    <input type="password" id="password" name="password" placeholder="Create secure password" required minlength="6">
+                    <div class="input-glow"></div>
+                </div>
 
-        <div class="login-link">
-            Already have an account? <a href="/login">Login here</a>
+                <button type="submit" class="login-button">
+                    <span class="icon">🚀</span> Create Flight Manifest
+                </button>
+
+                <div class="loading" id="loading">
+                    <div class="loading-dots">
+                        Creating manifest<span>.</span><span>.</span><span>.</span>
+                    </div>
+                </div>
+            </form>
+
+            <div class="footer-links">
+                Already have clearance? <a href="/login">Login here</a>
+            </div>
         </div>
     </div>
 
     <script>
-        function handleRegister() {
-            const username = document.getElementById('username').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
-            const errorDiv = document.getElementById('errorMessage');
-            const successDiv = document.getElementById('successMessage');
-            const registerBtn = document.getElementById('registerBtn');
-
-            // Validation
-            if (!username || !email || !password) {
-                errorDiv.textContent = 'Please fill in all fields';
-                errorDiv.style.display = 'block';
-                successDiv.style.display = 'none';
-                return;
-            }
-
-            if (password.length < 6) {
-                errorDiv.textContent = 'Password must be at least 6 characters';
-                errorDiv.style.display = 'block';
-                successDiv.style.display = 'none';
-                return;
-            }
-
-            // Disable button
-            registerBtn.disabled = true;
-            registerBtn.textContent = 'Creating Account...';
-            errorDiv.style.display = 'none';
-            successDiv.style.display = 'none';
-
-            // Create XMLHttpRequest
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', '/register', true);
-            xhr.setRequestHeader('Content-Type', 'application/json');
-
-            xhr.onload = function() {
-                if (xhr.status === 200) {
-                    const response = JSON.parse(xhr.responseText);
-                    if (response.success) {
-                        let message = '✅ Account created successfully!';
-                        if (response.is_early_bird) {
-                            message += ' 🎉 You are user #' + response.signup_number + ' - Early Bird eligible!';
-                        }
-                        successDiv.textContent = message;
-                        successDiv.style.display = 'block';
-                        
-                        // Redirect to login after 2 seconds
-                        setTimeout(function() {
-                            window.location.href = '/login';
-                        }, 2000);
-                    } else {
-                        errorDiv.textContent = response.error || 'Registration failed';
-                        errorDiv.style.display = 'block';
-                        registerBtn.disabled = false;
-                        registerBtn.textContent = 'Create Account';
-                    }
-                } else {
-                    const response = JSON.parse(xhr.responseText);
-                    errorDiv.textContent = response.error || 'Registration failed';
-                    errorDiv.style.display = 'block';
-                    registerBtn.disabled = false;
-                    registerBtn.textContent = 'Create Account';
-                }
-            };
-
-            xhr.onerror = function() {
-                errorDiv.textContent = 'Network error. Please try again.';
-                errorDiv.style.display = 'block';
-                registerBtn.disabled = false;
-                registerBtn.textContent = 'Create Account';
-            };
-
-            // Send request
-            xhr.send(JSON.stringify({
-                username: username,
-                email: email,
-                password: password
-            }));
+        // Particles
+        const particlesContainer = document.getElementById('particles');
+        for (let i = 0; i < 30; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 15 + 's';
+            particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+            particlesContainer.appendChild(particle);
         }
 
-        // Enter key support
-        document.getElementById('password').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                handleRegister();
+        // Register form
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('errorMessage');
+            const submitBtn = document.querySelector('.login-button');
+            
+            errorDiv.style.display = 'none';
+            loadingDiv.style.display = 'block';
+            submitBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = data.redirect;
+                } else {
+                    errorDiv.textContent = data.error || 'Registration failed';
+                    errorDiv.style.display = 'block';
+                    loadingDiv.style.display = 'none';
+                    submitBtn.disabled = false;
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Connection error. Please try again.';
+                errorDiv.style.display = 'block';
+                loadingDiv.style.display = 'none';
+                submitBtn.disabled = false;
             }
         });
     </script>

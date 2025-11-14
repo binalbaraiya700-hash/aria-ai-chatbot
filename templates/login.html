@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Aria AI</title>
+    <title>Pilot Login - Aria Aviation Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,228 +13,359 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
+            font-family: 'Poppins', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+            background: #000;
         }
 
-        .login-container {
-            background: white;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        /* Full screen background image */
+        .cockpit-background {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            max-width: 400px;
-            animation: fadeIn 0.5s;
+            height: 100%;
+            background: 
+                linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.4)),
+                url("{{ url_for('static', filename='images/cockpit-background.jpg.png') }}") center/cover no-repeat;
+            z-index: 0;
         }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        /* HUD Overlay - Left Side */
+        .hud-left {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.8);
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
+            text-align: left;
+            z-index: 1;
+            text-shadow: 0 0 10px rgba(0, 191, 255, 0.8);
         }
 
-        .logo {
+        .hud-left div {
+            margin-bottom: 10px;
+        }
+
+        /* HUD Overlay - Bottom Left */
+        .hud-bottom-left {
+            position: absolute;
+            left: 20px;
+            bottom: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            font-family: 'Orbitron', monospace;
+            font-size: 13px;
+            z-index: 1;
+            text-shadow: 0 0 10px rgba(0, 191, 255, 0.8);
+        }
+
+        /* Login Form - Centered and Transparent */
+        .login-form-container {
+            position: absolute;
+            right: 8%;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 420px;
+            background: rgba(20, 25, 35, 0.75);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            border: 1px solid rgba(0, 191, 255, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            z-index: 10;
+        }
+
+        .logo-title {
             text-align: center;
             margin-bottom: 30px;
         }
 
-        .logo h1 {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            background-clip: text;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            color: transparent;
-            font-size: 32px;
-            margin-bottom: 10px;
+        .logo-title h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 48px;
+            font-weight: 900;
+            color: #00bcd4;
+            letter-spacing: 4px;
+            margin-bottom: 5px;
+            text-shadow: 0 0 20px rgba(0, 191, 255, 0.6);
         }
 
-        .logo p {
-            color: #666;
+        .logo-title p {
+            color: rgba(255, 255, 255, 0.7);
             font-size: 14px;
+            letter-spacing: 2px;
         }
 
-        .form-group {
+        .form-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
             margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 500;
-            font-size: 14px;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 14px;
-            transition: all 0.3s;
-            outline: none;
-        }
-
-        .form-group input:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
         }
 
         .error-message {
+            background: rgba(255, 50, 50, 0.2);
+            border: 1px solid rgba(255, 50, 50, 0.5);
             color: #ff6b6b;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
             font-size: 13px;
-            margin-top: 10px;
             display: none;
-            padding: 10px;
-            background: rgba(255, 107, 107, 0.1);
-            border-radius: 8px;
         }
 
-        .login-btn {
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .input-group input {
             width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            padding: 14px 18px;
+            background: rgba(15, 20, 30, 0.7);
+            border: 2px solid rgba(0, 191, 255, 0.4);
+            border-radius: 10px;
+            color: #ffffff;
+            font-size: 15px;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s;
+        }
+
+        .input-group input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #00bcd4;
+            background: rgba(15, 20, 30, 0.9);
+            box-shadow: 0 0 15px rgba(0, 191, 255, 0.3);
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #0099ff 0%, #00bcd4 100%);
             border: none;
             border-radius: 10px;
+            color: white;
             font-size: 16px;
-            font-weight: bold;
+            font-weight: 700;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 10px 30px rgba(0, 153, 255, 0.4);
         }
 
-        .login-btn:hover {
+        .login-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 15px 40px rgba(0, 153, 255, 0.6);
         }
 
-        .login-btn:disabled {
+        .login-button:disabled {
             opacity: 0.6;
             cursor: not-allowed;
         }
 
-        .register-link {
+        .loading-text {
+            display: none;
             text-align: center;
-            margin-top: 20px;
-            color: #666;
+            color: #00bcd4;
+            margin-top: 12px;
             font-size: 14px;
         }
 
-        .register-link a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: bold;
+        .footer-links {
+            margin-top: 25px;
+            text-align: center;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
         }
 
-        .register-link a:hover {
-            text-decoration: underline;
+        .footer-links a {
+            color: #00bcd4;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(0, 191, 255, 0.8);
+        }
+
+        .separator {
+            margin: 0 10px;
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Holographic Input Labels - Like in Image */
+        .holographic-label {
+            position: absolute;
+            left: 50%;
+            bottom: -180px;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 5;
+        }
+
+        .holo-item {
+            background: rgba(0, 191, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 191, 255, 0.4);
+            padding: 12px 24px;
+            border-radius: 10px;
+            color: #00bcd4;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0, 191, 255, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .login-form-container {
+                right: 50%;
+                transform: translate(50%, -50%);
+                width: 90%;
+                padding: 30px 20px;
+            }
+
+            .hud-left, .hud-bottom-left, .holographic-label {
+                display: none;
+            }
+
+            .logo-title h1 {
+                font-size: 36px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="logo">
-            <h1>✈️ Aria AI</h1>
-            <p>Your Intelligent Assistant</p>
+    <!-- Full screen cockpit background -->
+    <div class="cockpit-background"></div>
+
+    <!-- HUD Elements - Left Side -->
+    <div class="hud-left">
+        <div>SYSTEM STATUS: ONLINE</div>
+        <div>LAT: 28.5355° N</div>
+        <div>LON: 77.3910° E</div>
+    </div>
+
+    <!-- HUD Elements - Bottom Left -->
+    <div class="hud-bottom-left">
+        <div>ALT: 35,000 FT</div>
+        <div>SPD: 450 KTS</div>
+        <div>HDG: 270°</div>
+        <div>FLAPS: 0°</div>
+        <div>TCAS: ACTIVE</div>
+    </div>
+
+    <!-- Login Form - Right Side -->
+    <div class="login-form-container">
+        <div class="logo-title">
+            <h1>ARIA</h1>
+            <p>Aviation Intelligence Platform</p>
         </div>
 
-        <div id="errorMessage" class="error-message"></div>
-
-        <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" id="email" placeholder="Enter your email" required>
+        <div class="form-header">
+            <span>✈️</span>
+            <span>Secure Flight Plan Entry</span>
         </div>
 
-        <div class="form-group">
-            <label for="password">Password</label>
-            <input type="password" id="password" placeholder="Enter your password" required>
+        <div id="errorMessage" class="error-message">
+            Invalid credentials. Please try again.
         </div>
 
-        <button class="login-btn" id="loginBtn" onclick="handleLogin()">Login</button>
+        <form id="loginForm">
+            <div class="input-group">
+                <label for="email">Pilot ID / Username</label>
+                <input type="email" id="email" name="email" placeholder="your.email@aviation.com" required>
+            </div>
 
-        <div class="register-link">
-            Don't have an account? <a href="/register">Register here</a>
+            <div class="input-group">
+                <label for="password">Flight Plan Access Key</label>
+                <input type="password" id="password" name="password" placeholder="Enter secure access code" required>
+            </div>
+
+            <button type="submit" class="login-button">
+                <span>🛩️</span>
+                <span>Initiate Pre-Flight</span>
+            </button>
+
+            <div class="loading-text" id="loading">
+                Authenticating...
+            </div>
+        </form>
+
+        <div class="footer-links">
+            <a href="/register">No crew manifest? Sign up here</a>
+            <span class="separator">|</span>
+            <a href="#">Forgot Access Key?</a>
+        </div>
+
+        <!-- Holographic Labels (Like in Image) -->
+        <div class="holographic-label">
+            <div class="holo-item">Pilot ID</div>
+            <div class="holo-item">Flight Plan Access Key</div>
         </div>
     </div>
 
     <script>
-        function handleLogin() {
-            const email = document.getElementById('email').value.trim();
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            const loadingDiv = document.getElementById('loading');
             const errorDiv = document.getElementById('errorMessage');
-            const loginBtn = document.getElementById('loginBtn');
-
-            // Validation
-            if (!email || !password) {
-                errorDiv.textContent = 'Please fill in all fields';
-                errorDiv.style.display = 'block';
-                return;
-            }
-
-            // Disable button
-            loginBtn.disabled = true;
-            loginBtn.textContent = 'Logging in...';
+            const submitBtn = document.querySelector('.login-button');
+            
             errorDiv.style.display = 'none';
-
-            // Create XMLHttpRequest
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', '/login', true);
-            xhr.setRequestHeader('Content-Type', 'application/json');
-
-            xhr.onload = function() {
-                if (xhr.status === 200) {
-                    const response = JSON.parse(xhr.responseText);
-                    if (response.success) {
-                        window.location.href = '/';
-                    } else {
-                        errorDiv.textContent = response.error || 'Login failed';
-                        errorDiv.style.display = 'block';
-                        loginBtn.disabled = false;
-                        loginBtn.textContent = 'Login';
-                    }
+            loadingDiv.style.display = 'block';
+            submitBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = data.redirect;
                 } else {
-                    const response = JSON.parse(xhr.responseText);
-                    errorDiv.textContent = response.error || 'Invalid email or password';
+                    errorDiv.textContent = data.error || 'Invalid credentials';
                     errorDiv.style.display = 'block';
-                    loginBtn.disabled = false;
-                    loginBtn.textContent = 'Login';
+                    loadingDiv.style.display = 'none';
+                    submitBtn.disabled = false;
                 }
-            };
-
-            xhr.onerror = function() {
-                errorDiv.textContent = 'Network error. Please try again.';
+            } catch (error) {
+                errorDiv.textContent = 'Connection error. Please try again.';
                 errorDiv.style.display = 'block';
-                loginBtn.disabled = false;
-                loginBtn.textContent = 'Login';
-            };
-
-            // Send request
-            xhr.send(JSON.stringify({
-                email: email,
-                password: password
-            }));
-        }
-
-        // Enter key support
-        document.getElementById('password').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                handleLogin();
-            }
-        });
-
-        document.getElementById('email').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                document.getElementById('password').focus();
+                loadingDiv.style.display = 'none';
+                submitBtn.disabled = false;
             }
         });
     </script>

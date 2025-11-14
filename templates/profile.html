@@ -3,218 +3,409 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile - Aria AI</title>
+    <title>Aria AI - Your Intelligent Assistant</title>
+    <meta name="description" content="AI-powered assistant for aviation career guidance">
+    <meta name="theme-color" content="#667eea">
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="apple-touch-icon" href="/static/icon-192.png">
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        :root {
+            --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-chat: #f5f5f5;
+            --bg-message: white;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --border-color: #e0e0e0;
+            --input-bg: white;
+            --header-text: white;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            --bg-chat: #0f1419;
+            --bg-message: #1a1d23;
+            --text-primary: #e4e6eb;
+            --text-secondary: #b0b3b8;
+            --border-color: #2d3748;
+            --input-bg: #1a1d23;
+            --header-text: #e4e6eb;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            background: var(--bg-primary);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .container {
-            max-width: 1000px;
-            margin: 0 auto;
+            width: 95%;
+            max-width: 1200px;
+            height: 90vh;
+            background: var(--bg-chat);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
         .header {
-            background: white;
-            padding: 20px 30px;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+            background: var(--bg-primary);
+            padding: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            color: var(--header-text);
         }
 
-        .header h1 {
-            color: #667eea;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .back-btn {
-            background: #667eea;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 10px;
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        .profile-grid {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .profile-card {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
-
-        .profile-avatar {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .avatar {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 48px;
-            color: white;
-            margin: 0 auto 15px;
-        }
-
-        .username {
+        .header-left h1 {
             font-size: 24px;
-            font-weight: bold;
-            color: #333;
             margin-bottom: 5px;
         }
 
-        .email {
-            color: #666;
+        .header-left .subtitle {
             font-size: 14px;
+            opacity: 0.9;
         }
 
-        .premium-badge {
-            display: inline-block;
-            background: #ffd700;
-            color: #333;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-            margin-top: 10px;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .stat-box {
-            text-align: center;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 10px;
-        }
-
-        .stat-value {
-            font-size: 28px;
-            font-weight: bold;
-            color: #667eea;
-        }
-
-        .stat-label {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
-        }
-
-        .section-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 15px;
+        .header-right {
             display: flex;
+            gap: 15px;
             align-items: center;
-            gap: 10px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 500;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #667eea;
         }
 
         .btn {
-            padding: 12px 25px;
+            padding: 10px 20px;
             border: none;
             border-radius: 8px;
-            font-weight: bold;
             cursor: pointer;
-            transition: all 0.3s;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: white;
+            color: #667eea;
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 5px 15px rgba(255,255,255,0.3);
         }
 
-        .btn-danger {
-            background: #ff6b6b;
+        .theme-toggle {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .stats-bar {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-primary);
+        }
+
+        .stat-item .icon {
+            font-size: 20px;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .categories {
+            display: flex;
+            gap: 10px;
+            padding: 15px 20px;
+            overflow-x: auto;
+            background: var(--bg-chat);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .category-btn {
+            padding: 8px 16px;
+            border: 2px solid var(--border-color);
+            background: var(--bg-message);
+            color: var(--text-primary);
+            border-radius: 20px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+
+        .category-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .quick-replies {
+            padding: 10px 20px;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            background: var(--bg-chat);
+        }
+
+        .quick-reply {
+            padding: 6px 12px;
+            background: var(--bg-message);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-primary);
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .quick-reply:hover {
+            background: #667eea;
             color: white;
         }
 
-        .alert {
-            padding: 12px 20px;
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: var(--bg-chat);
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .message.user .message-avatar {
+            background: #667eea;
+        }
+
+        .message.ai .message-avatar {
+            background: #764ba2;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 15px;
+            border-radius: 15px;
+            background: var(--bg-message);
+            color: var(--text-primary);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .message.user .message-content {
+            background: #667eea;
+            color: white;
+        }
+
+        .input-area {
+            padding: 20px;
+            background: var(--bg-chat);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .document-upload {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .upload-btn {
+            padding: 8px 15px;
+            background: #667eea;
+            color: white;
+            border: none;
             border-radius: 8px;
-            margin-bottom: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .input-box {
+            display: flex;
+            gap: 10px;
+        }
+
+        #messageInput {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 16px;
+            background: var(--input-bg);
+            color: var(--text-primary);
+        }
+
+        #sendBtn {
+            padding: 15px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        #sendBtn:hover {
+            background: #5568d3;
+        }
+
+        #sendBtn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .typing-indicator {
             display: none;
+            padding: 10px 15px;
+            background: var(--bg-message);
+            border-radius: 15px;
+            width: fit-content;
         }
 
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+        .typing-dots {
+            display: flex;
+            gap: 5px;
         }
 
-        .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
+        .limit-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .limit-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+        }
+
+        .limit-content h2 {
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .level-up-animation {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 30px 50px;
+            border-radius: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            z-index: 1001;
+            animation: levelUp 2s ease-out;
+        }
+
+        @keyframes levelUp {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        .pwa-install {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #667eea;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 999;
         }
 
         @media (max-width: 768px) {
-            .profile-grid {
-                grid-template-columns: 1fr;
+            .container {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
             }
 
-            .stats-grid {
-                grid-template-columns: 1fr;
+            .message-content {
+                max-width: 85%;
+            }
+
+            .stats-bar {
+                font-size: 12px;
             }
         }
     </style>
@@ -222,178 +413,354 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>👤 My Profile</h1>
-            <a href="/" class="back-btn">← Back to Chat</a>
+            <div class="header-left">
+                <h1>✈️ Aria AI</h1>
+                <p class="subtitle">Your Intelligent Aviation Assistant</p>
+            </div>
+            <div class="header-right">
+                <div class="stat-item" id="timerDisplay">
+                    <span class="icon">⏱️</span>
+                    <span class="stat-value">{{ time_remaining }}</span>
+                </div>
+                <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+                <button class="btn btn-primary" onclick="location.href='/profile'">👤 Profile</button>
+                {% if is_admin %}
+                <button class="btn btn-primary" onclick="location.href='/admin'">👨‍💼 Admin</button>
+                {% endif %}
+                <button class="btn btn-primary" onclick="location.href='/history'">📜 History</button>
+                <button class="btn btn-primary" onclick="location.href='/logout'">Logout</button>
+            </div>
         </div>
 
-        <div class="profile-grid">
-            <!-- Left Column - Profile Info -->
-            <div class="profile-card">
-                <div class="profile-avatar">
-                    <div class="avatar">{{ user.username[0].upper() }}</div>
-                    <div class="username">{{ user.username }}</div>
-                    <div class="email">{{ user.email }}</div>
-                    {% if user.is_premium %}
-                        <span class="premium-badge">⭐ PREMIUM USER</span>
-                        {% if user.is_early_bird %}
-                            <span class="premium-badge" style="background: #ff6b6b;">🔥 EARLY BIRD</span>
-                        {% endif %}
-                    {% endif %}
-                </div>
+        <div class="stats-bar">
+            <div class="stat-item">
+                <span class="icon">🎮</span>
+                <span>Level <span class="stat-value">{{ user.level }}</span></span>
+            </div>
+            <div class="stat-item">
+                <span class="icon">⭐</span>
+                <span>XP: <span class="stat-value">{{ user.xp }}</span></span>
+            </div>
+            <div class="stat-item">
+                <span class="icon">🔥</span>
+                <span>Streak: <span class="stat-value">{{ user.streak_days }}</span> days</span>
+            </div>
+            <div class="stat-item">
+                <span class="icon">💬</span>
+                <span>Messages: <span class="stat-value">{{ user.messages|length }}</span></span>
+            </div>
+            {% if not user.is_premium %}
+            <button class="btn btn-primary" onclick="upgradePremium()">
+                ⭐ Upgrade - ₹{{ user.premium_price }}/month
+            </button>
+            {% else %}
+            <div class="stat-item">
+                <span class="icon">⭐</span>
+                <span class="stat-value">Premium Active</span>
+            </div>
+            {% endif %}
+        </div>
 
-                <div class="stats-grid">
-                    <div class="stat-box">
-                        <div class="stat-value">{{ total_messages }}</div>
-                        <div class="stat-label">Total Messages</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-value">{{ days_used }}</div>
-                        <div class="stat-label">Days Active</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-value">{{ total_time_spent }}</div>
-                        <div class="stat-label">Time Spent</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-value">{% if user.is_premium %}∞{% else %}{{ (1200 - user.daily_chat_seconds) // 60 }}{% endif %}</div>
-                        <div class="stat-label">Min Left Today</div>
-                    </div>
+        <div class="categories">
+            <button class="category-btn active" onclick="selectCategory('general')">🌐 General</button>
+            <button class="category-btn" onclick="selectCategory('aviation')">✈️ Aviation</button>
+            <button class="category-btn" onclick="selectCategory('career')">💼 Career</button>
+            <button class="category-btn" onclick="selectCategory('study')">📚 Study</button>
+        </div>
+
+        <div class="quick-replies" id="quickReplies"></div>
+
+        <div class="chat-area" id="chatArea">
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
                 </div>
             </div>
+        </div>
 
-            <!-- Right Column - Settings -->
-            <div class="profile-card">
-                <div class="section-title">⚙️ Account Settings</div>
-                
-                <div id="alertBox" class="alert"></div>
-
-                <form id="profileForm">
-                    <div class="form-group">
-                        <label>Username</label>
-                        <input type="text" id="username" value="{{ user.username }}" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" id="email" value="{{ user.email }}" required>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary">Update Profile</button>
-                </form>
-
-                <hr style="margin: 30px 0; border: none; border-top: 1px solid #e0e0e0;">
-
-                <div class="section-title">🔒 Change Password</div>
-
-                <form id="passwordForm">
-                    <div class="form-group">
-                        <label>Current Password</label>
-                        <input type="password" id="currentPassword" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>New Password</label>
-                        <input type="password" id="newPassword" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Confirm New Password</label>
-                        <input type="password" id="confirmPassword" required>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary">Change Password</button>
-                </form>
-
-                {% if not user.is_premium %}
-                <hr style="margin: 30px 0; border: none; border-top: 1px solid #e0e0e0;">
-                <div class="section-title">⭐ Upgrade to Premium</div>
-                <p style="color: #666; margin-bottom: 15px;">
-                    Get unlimited chat time, priority support, and exclusive features!
-                </p>
-                <button onclick="window.location.href='/'" class="btn btn-primary">
-                    Upgrade Now - ₹89/month
+        <div class="input-area">
+            <div class="document-upload">
+                <input type="file" id="fileInput" accept=".pdf" style="display: none;" onchange="uploadDocument()">
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                    📄 Upload PDF
                 </button>
-                {% endif %}
+                <span id="uploadStatus"></span>
+            </div>
+            <div class="input-box">
+                <input type="text" id="messageInput" placeholder="Type your message..." 
+                       onkeypress="if(event.key === 'Enter') sendMessage()">
+                <button id="sendBtn" onclick="sendMessage()">Send</button>
             </div>
         </div>
     </div>
 
+    <div class="limit-overlay" id="limitOverlay">
+        <div class="limit-content">
+            <h2>⏰ Time Limit Reached</h2>
+            <p>You've used your 20-minute daily limit!</p>
+            <p>Upgrade to Premium for unlimited chat time.</p>
+            <button class="btn btn-primary" onclick="upgradePremium()">
+                Upgrade Now - ₹{{ user.premium_price }}
+            </button>
+        </div>
+    </div>
+
+    <div class="level-up-animation" id="levelUpAnim">
+        🎉 Level Up! 🎉
+    </div>
+
+    <div class="pwa-install" id="pwaInstall" onclick="installPWA()">
+        📱 Install App
+    </div>
+
     <script>
-        // Update Profile
-        document.getElementById('profileForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
+        let timeRemaining = {{ time_remaining.split(':')[0]|int * 60 + time_remaining.split(':')[1]|int }};
+        let timerInterval;
+        let currentCategory = 'general';
+        let deferredPrompt;
+        let uploadedDocId = null;
+
+        const quickRepliesData = {
+            general: ['Hello!', 'How are you?', 'Tell me about yourself', 'What can you help with?'],
+            aviation: ['How to become a pilot?', 'Aircraft types', 'Aviation careers', 'Flight training'],
+            career: ['Career guidance', 'Resume tips', 'Interview prep', 'Skills needed'],
+            study: ['Study tips', 'Time management', 'Exam preparation', 'Learning methods']
+        };
+
+        // Theme toggle
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
             
-            const data = {
-                username: document.getElementById('username').value,
-                email: document.getElementById('email').value
-            };
+            const btn = document.querySelector('.theme-toggle');
+            btn.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+        }
 
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        if (savedTheme === 'dark') {
+            document.querySelector('.theme-toggle').textContent = '☀️';
+        }
+
+        // Category selection
+        function selectCategory(category) {
+            currentCategory = category;
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            updateQuickReplies();
+        }
+
+        function updateQuickReplies() {
+            const container = document.getElementById('quickReplies');
+            container.innerHTML = '';
+            quickRepliesData[currentCategory].forEach(reply => {
+                const btn = document.createElement('button');
+                btn.className = 'quick-reply';
+                btn.textContent = reply;
+                btn.onclick = () => {
+                    document.getElementById('messageInput').value = reply;
+                    sendMessage();
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        updateQuickReplies();
+
+        // Timer
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            const display = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('timerDisplay').querySelector('.stat-value').textContent = display;
+            
+            if (timeRemaining <= 0) {
+                clearInterval(timerInterval);
+            }
+        }
+
+        {% if not user.is_premium %}
+        timerInterval = setInterval(() => {
+            if (timeRemaining > 0) {
+                timeRemaining--;
+                updateTimerDisplay();
+            }
+        }, 1000);
+        {% endif %}
+
+        // Chat functions
+        function addMessage(text, isUser) {
+            const chatArea = document.getElementById('chatArea');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
+            
+            messageDiv.innerHTML = `
+                <div class="message-avatar">${isUser ? '👤' : '🤖'}</div>
+                <div class="message-content">${text}</div>
+            `;
+            
+            chatArea.insertBefore(messageDiv, document.getElementById('typingIndicator'));
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            addMessage(message, true);
+            input.value = '';
+            
+            document.getElementById('typingIndicator').style.display = 'block';
+            document.getElementById('sendBtn').disabled = true;
+            
             try {
-                const response = await fetch('/api/update-profile', {
+                const response = await fetch('/chat', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(data)
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        message: uploadedDocId ? `[Document Question] ${message}` : message,
+                        category: currentCategory,
+                        doc_id: uploadedDocId
+                    })
                 });
-
-                const result = await response.json();
                 
-                if (result.success) {
-                    showAlert('✅ Profile updated successfully!', 'success');
-                    setTimeout(() => location.reload(), 1500);
+                const data = await response.json();
+                
+                document.getElementById('typingIndicator').style.display = 'none';
+                document.getElementById('sendBtn').disabled = false;
+                
+                if (data.limit_reached) {
+                    addMessage(data.response, false);
+                    document.getElementById('limitOverlay').style.display = 'flex';
                 } else {
-                    showAlert('❌ ' + result.error, 'error');
+                    addMessage(data.response, false);
+                    
+                    if (data.time_remaining !== undefined) {
+                        timeRemaining = data.time_remaining;
+                        updateTimerDisplay();
+                    }
+                    
+                    if (data.level_up) {
+                        showLevelUp(data.level);
+                    }
+                    
+                    // Update stats
+                    document.querySelector('.stats-bar .stat-value').textContent = data.level;
+                    const xpElement = document.querySelectorAll('.stat-value')[1];
+                    if (xpElement) xpElement.textContent = data.total_xp;
+                    const streakElement = document.querySelectorAll('.stat-value')[2];
+                    if (streakElement) streakElement.textContent = data.streak;
                 }
             } catch (error) {
-                showAlert('❌ Error updating profile', 'error');
+                console.error('Error:', error);
+                document.getElementById('typingIndicator').style.display = 'none';
+                document.getElementById('sendBtn').disabled = false;
+                addMessage('Error connecting to AI. Please try again.', false);
             }
-        });
+        }
 
-        // Change Password
-        document.getElementById('passwordForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const newPass = document.getElementById('newPassword').value;
-            const confirmPass = document.getElementById('confirmPassword').value;
-
-            if (newPass !== confirmPass) {
-                showAlert('❌ Passwords do not match!', 'error');
-                return;
-            }
-
-            const data = {
-                current_password: document.getElementById('currentPassword').value,
-                new_password: newPass
-            };
-
-            try {
-                const response = await fetch('/api/change-password', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(data)
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    showAlert('✅ Password changed successfully!', 'success');
-                    document.getElementById('passwordForm').reset();
-                } else {
-                    showAlert('❌ ' + result.error, 'error');
-                }
-            } catch (error) {
-                showAlert('❌ Error changing password', 'error');
-            }
-        });
-
-        function showAlert(message, type) {
-            const alertBox = document.getElementById('alertBox');
-            alertBox.className = `alert alert-${type}`;
-            alertBox.textContent = message;
-            alertBox.style.display = 'block';
-            
+        function showLevelUp(level) {
+            const anim = document.getElementById('levelUpAnim');
+            anim.textContent = `🎉 Level ${level}! 🎉`;
+            anim.style.display = 'block';
             setTimeout(() => {
-                alertBox.style.display = 'none';
-            }, 3000);
+                anim.style.display = 'none';
+            }, 2000);
+        }
+
+        // Document upload
+        async function uploadDocument() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            document.getElementById('uploadStatus').textContent = 'Uploading...';
+            
+            try {
+                const response = await fetch('/upload-document', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    uploadedDocId = data.doc_id;
+                    document.getElementById('uploadStatus').textContent = '✅ ' + data.message;
+                    addMessage(`Document "${file.name}" uploaded! You can now ask questions about it.`, false);
+                } else {
+                    document.getElementById('uploadStatus').textContent = '❌ ' + data.error;
+                }
+            } catch (error) {
+                document.getElementById('uploadStatus').textContent = '❌ Upload failed';
+            }
+        }
+
+        // Premium upgrade
+        function upgradePremium() {
+            fetch('/create-order', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    const options = {
+                        key: data.key,
+                        amount: data.amount,
+                        currency: data.currency,
+                        name: 'Aria AI Premium',
+                        description: 'Unlimited AI Chat Access',
+                        order_id: data.order_id,
+                        handler: function(response) {
+                            fetch('/payment-success', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(response)
+                            }).then(() => location.reload());
+                        }
+                    };
+                    
+                    const rzp = new Razorpay(options);
+                    rzp.open();
+                });
+        }
+
+        // PWA Installation
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('pwaInstall').style.display = 'block';
+        });
+
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('PWA installed');
+                    }
+                    deferredPrompt = null;
+                    document.getElementById('pwaInstall').style.display = 'none';
+                });
+            }
+        }
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('Service Worker registered'))
+                .catch(err => console.log('Service Worker registration failed'));
         }
     </script>
 </body>
