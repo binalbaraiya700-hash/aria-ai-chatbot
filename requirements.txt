@@ -11,7 +11,7 @@ openai==1.12.0
 anthropic==0.18.1
 
 # Image Processing
-Pillow>=11.0.0
+Pillow==10.2.0
 opencv-python==4.9.0.80
 pytesseract==0.3.10
 
@@ -26,7 +26,7 @@ SpeechRecognition==3.10.1
 gTTS==2.5.0
 
 # Data & Charts
-Pillow=2.2.3
+pandas==2.1.4
 matplotlib==3.8.2
 plotly==5.18.0
 
