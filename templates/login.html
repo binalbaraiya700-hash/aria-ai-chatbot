@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pilot Login - Aria Aviation Platform</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>Pilot Login - Aria Aviation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -16,134 +17,100 @@
             font-family: 'Poppins', sans-serif;
             height: 100vh;
             overflow: hidden;
-            position: relative;
             background: #000;
         }
 
-        /* Full screen background image */
-        .cockpit-background {
-            position: absolute;
+        .cockpit-bg {
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             background: 
-                linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.4)),
-                url("{{ url_for('static', filename='images/cockpit-background.jpg.png') }}") center/cover no-repeat;
+                linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.5)),
+                url("{{ url_for('static', filename='images/cockpit-background.jpg.png') }}") center/cover no-repeat fixed;
             z-index: 0;
         }
 
-        /* HUD Overlay - Left Side */
-        .hud-left {
-            position: absolute;
-            left: 20px;
+        .login-container {
+            position: fixed;
+            left: 50%;
             top: 50%;
-            transform: translateY(-50%);
-            color: rgba(255, 255, 255, 0.8);
-            font-family: 'Orbitron', monospace;
-            font-size: 14px;
-            text-align: left;
-            z-index: 1;
-            text-shadow: 0 0 10px rgba(0, 191, 255, 0.8);
-        }
-
-        .hud-left div {
-            margin-bottom: 10px;
-        }
-
-        /* HUD Overlay - Bottom Left */
-        .hud-bottom-left {
-            position: absolute;
-            left: 20px;
-            bottom: 20px;
-            color: rgba(255, 255, 255, 0.8);
-            font-family: 'Orbitron', monospace;
-            font-size: 13px;
-            z-index: 1;
-            text-shadow: 0 0 10px rgba(0, 191, 255, 0.8);
-        }
-
-        /* Login Form - Centered and Transparent */
-        .login-form-container {
-            position: absolute;
-            right: 8%;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 420px;
-            background: rgba(20, 25, 35, 0.75);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 40px;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 420px;
+            background: rgba(15, 20, 30, 0.88);
+            backdrop-filter: blur(12px);
+            border-radius: 18px;
+            padding: 35px 30px;
             border: 1px solid rgba(0, 191, 255, 0.3);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.7);
             z-index: 10;
         }
 
-        .logo-title {
+        .logo {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
 
-        .logo-title h1 {
+        .logo h1 {
             font-family: 'Orbitron', sans-serif;
-            font-size: 48px;
+            font-size: 44px;
             font-weight: 900;
             color: #00bcd4;
-            letter-spacing: 4px;
+            letter-spacing: 3px;
             margin-bottom: 5px;
-            text-shadow: 0 0 20px rgba(0, 191, 255, 0.6);
+            text-shadow: 0 0 15px rgba(0, 191, 255, 0.5);
         }
 
-        .logo-title p {
+        .logo p {
             color: rgba(255, 255, 255, 0.7);
-            font-size: 14px;
-            letter-spacing: 2px;
+            font-size: 12px;
+            letter-spacing: 1.5px;
         }
 
         .form-header {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 14px;
             margin-bottom: 20px;
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 16px;
         }
 
-        .error-message {
-            background: rgba(255, 50, 50, 0.2);
-            border: 1px solid rgba(255, 50, 50, 0.5);
+        .error-msg {
+            background: rgba(255, 50, 50, 0.15);
+            border: 1px solid rgba(255, 50, 50, 0.4);
             color: #ff6b6b;
-            padding: 12px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 12px;
             text-align: center;
-            font-size: 13px;
             display: none;
         }
 
         .input-group {
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .input-group label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             color: rgba(255, 255, 255, 0.7);
-            font-size: 13px;
-            font-weight: 500;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .input-group input {
             width: 100%;
-            padding: 14px 18px;
-            background: rgba(15, 20, 30, 0.7);
-            border: 2px solid rgba(0, 191, 255, 0.4);
-            border-radius: 10px;
-            color: #ffffff;
-            font-size: 15px;
-            font-family: 'Poppins', sans-serif;
-            transition: all 0.3s;
+            padding: 12px 15px;
+            background: rgba(10, 15, 25, 0.6);
+            border: 1.5px solid rgba(0, 191, 255, 0.3);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            transition: all 0.2s;
         }
 
         .input-group input::placeholder {
@@ -153,166 +120,107 @@
         .input-group input:focus {
             outline: none;
             border-color: #00bcd4;
-            background: rgba(15, 20, 30, 0.9);
-            box-shadow: 0 0 15px rgba(0, 191, 255, 0.3);
+            background: rgba(10, 15, 25, 0.8);
+            box-shadow: 0 0 12px rgba(0, 191, 255, 0.25);
         }
 
-        .login-button {
+        .login-btn {
             width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #0099ff 0%, #00bcd4 100%);
+            padding: 13px;
+            background: linear-gradient(135deg, #0099ff, #00bcd4);
             border: none;
-            border-radius: 10px;
-            color: white;
-            font-size: 16px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
             font-weight: 700;
             cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            box-shadow: 0 10px 30px rgba(0, 153, 255, 0.4);
+            transition: all 0.2s;
+            margin-top: 5px;
         }
 
-        .login-button:hover {
+        .login-btn:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 15px 40px rgba(0, 153, 255, 0.6);
+            box-shadow: 0 12px 30px rgba(0, 153, 255, 0.4);
         }
 
-        .login-button:disabled {
-            opacity: 0.6;
+        .login-btn:disabled {
+            opacity: 0.5;
             cursor: not-allowed;
         }
 
-        .loading-text {
+        .loading {
             display: none;
             text-align: center;
             color: #00bcd4;
-            margin-top: 12px;
-            font-size: 14px;
+            margin-top: 10px;
+            font-size: 12px;
         }
 
         .footer-links {
-            margin-top: 25px;
+            margin-top: 20px;
             text-align: center;
-            font-size: 13px;
+            font-size: 11px;
             color: rgba(255, 255, 255, 0.6);
         }
 
         .footer-links a {
             color: #00bcd4;
             text-decoration: none;
-            transition: all 0.3s;
+            transition: color 0.2s;
         }
 
         .footer-links a:hover {
-            color: #ffffff;
-            text-shadow: 0 0 10px rgba(0, 191, 255, 0.8);
+            color: #fff;
         }
 
         .separator {
-            margin: 0 10px;
-            color: rgba(255, 255, 255, 0.3);
+            margin: 0 8px;
+            opacity: 0.5;
         }
 
-        /* Holographic Input Labels - Like in Image */
-        .holographic-label {
-            position: absolute;
-            left: 50%;
-            bottom: -180px;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 20px;
-            z-index: 5;
-        }
-
-        .holo-item {
-            background: rgba(0, 191, 255, 0.15);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 191, 255, 0.4);
-            padding: 12px 24px;
-            border-radius: 10px;
-            color: #00bcd4;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 13px;
-            text-align: center;
-            box-shadow: 0 5px 20px rgba(0, 191, 255, 0.3);
-        }
-
-        @media (max-width: 768px) {
-            .login-form-container {
-                right: 50%;
-                transform: translate(50%, -50%);
-                width: 90%;
-                padding: 30px 20px;
+        @media (max-width: 480px) {
+            .login-container {
+                width: 95%;
+                padding: 30px 25px;
             }
 
-            .hud-left, .hud-bottom-left, .holographic-label {
-                display: none;
-            }
-
-            .logo-title h1 {
+            .logo h1 {
                 font-size: 36px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Full screen cockpit background -->
-    <div class="cockpit-background"></div>
+    <div class="cockpit-bg"></div>
 
-    <!-- HUD Elements - Left Side -->
-    <div class="hud-left">
-        <div>SYSTEM STATUS: ONLINE</div>
-        <div>LAT: 28.5355° N</div>
-        <div>LON: 77.3910° E</div>
-    </div>
-
-    <!-- HUD Elements - Bottom Left -->
-    <div class="hud-bottom-left">
-        <div>ALT: 35,000 FT</div>
-        <div>SPD: 450 KTS</div>
-        <div>HDG: 270°</div>
-        <div>FLAPS: 0°</div>
-        <div>TCAS: ACTIVE</div>
-    </div>
-
-    <!-- Login Form - Right Side -->
-    <div class="login-form-container">
-        <div class="logo-title">
+    <div class="login-container">
+        <div class="logo">
             <h1>ARIA</h1>
             <p>Aviation Intelligence Platform</p>
         </div>
 
         <div class="form-header">
-            <span>✈️</span>
-            <span>Secure Flight Plan Entry</span>
+            ✈️ Secure Flight Plan Entry
         </div>
 
-        <div id="errorMessage" class="error-message">
-            Invalid credentials. Please try again.
-        </div>
+        <div id="errorMsg" class="error-msg"></div>
 
         <form id="loginForm">
             <div class="input-group">
-                <label for="email">Pilot ID / Username</label>
-                <input type="email" id="email" name="email" placeholder="your.email@aviation.com" required>
+                <label>Pilot ID / Email</label>
+                <input type="email" id="email" placeholder="your.email@aviation.com" required autofocus>
             </div>
 
             <div class="input-group">
-                <label for="password">Flight Plan Access Key</label>
-                <input type="password" id="password" name="password" placeholder="Enter secure access code" required>
+                <label>Access Key</label>
+                <input type="password" id="password" placeholder="Enter secure password" required>
             </div>
 
-            <button type="submit" class="login-button">
-                <span>🛩️</span>
-                <span>Initiate Pre-Flight</span>
+            <button type="submit" class="login-btn" id="loginBtn">
+                🛩️ Initiate Pre-Flight
             </button>
 
-            <div class="loading-text" id="loading">
-                Authenticating...
-            </div>
+            <div class="loading" id="loading">Authenticating...</div>
         </form>
 
         <div class="footer-links">
@@ -320,52 +228,45 @@
             <span class="separator">|</span>
             <a href="#">Forgot Access Key?</a>
         </div>
-
-        <!-- Holographic Labels (Like in Image) -->
-        <div class="holographic-label">
-            <div class="holo-item">Pilot ID</div>
-            <div class="holo-item">Flight Plan Access Key</div>
-        </div>
     </div>
 
     <script>
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        const form = document.getElementById('loginForm');
+        const errorMsg = document.getElementById('errorMsg');
+        const loading = document.getElementById('loading');
+        const loginBtn = document.getElementById('loginBtn');
+
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const email = document.getElementById('email').value;
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
-            const loadingDiv = document.getElementById('loading');
-            const errorDiv = document.getElementById('errorMessage');
-            const submitBtn = document.querySelector('.login-button');
             
-            errorDiv.style.display = 'none';
-            loadingDiv.style.display = 'block';
-            submitBtn.disabled = true;
+            errorMsg.style.display = 'none';
+            loading.style.display = 'block';
+            loginBtn.disabled = true;
             
             try {
-                const response = await fetch('/login', {
+                const res = await fetch('/login', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
                 
-                const data = await response.json();
+                const data = await res.json();
                 
                 if (data.success) {
-                    window.location.href = data.redirect;
+                    window.location.href = '/';
                 } else {
-                    errorDiv.textContent = data.error || 'Invalid credentials';
-                    errorDiv.style.display = 'block';
-                    loadingDiv.style.display = 'none';
-                    submitBtn.disabled = false;
+                    errorMsg.textContent = data.error || 'Invalid credentials';
+                    errorMsg.style.display = 'block';
                 }
-            } catch (error) {
-                errorDiv.textContent = 'Connection error. Please try again.';
-                errorDiv.style.display = 'block';
-                loadingDiv.style.display = 'none';
-                submitBtn.disabled = false;
+            } catch (err) {
+                errorMsg.textContent = 'Connection error. Please try again.';
+                errorMsg.style.display = 'block';
+            } finally {
+                loading.style.display = 'none';
+                loginBtn.disabled = false;
             }
         });
     </script>
