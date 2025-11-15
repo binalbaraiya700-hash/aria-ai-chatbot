@@ -9,7 +9,7 @@ import json
 import secrets
 import google.generativeai as genai
 from dotenv import load_dotenv
-import PyPDF2
+import PyPDF
 import io
 
 # Load environment variables
