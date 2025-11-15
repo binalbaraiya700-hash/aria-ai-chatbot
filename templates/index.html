@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aria AI - Creative Assistant</title>
+    <title>Aria AI - Aviation Assistant</title>
+    <link rel="icon" type="image/png" href="/static/images/logo2.png">
     <style>
         * {
             margin: 0;
@@ -12,211 +13,297 @@
         }
 
         body {
-            font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-            background-attachment: fixed;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: url('/static/images/cockpit-background.jpg.png') center/cover fixed;
             height: 100vh;
             overflow: hidden;
         }
 
-        .app-wrapper {
-            display: flex;
-            height: 100vh;
-            padding: 20px;
-            gap: 20px;
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 10, 20, 0.85);
+            z-index: 0;
         }
 
-        /* Left Sidebar - Canva Style */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Sidebar - Collapsible */
         .sidebar {
-            width: 280px;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            width: 300px;
+            background: rgba(10, 15, 30, 0.95);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(0, 212, 255, 0.2);
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            padding: 20px;
+            transition: all 0.3s ease;
+            position: relative;
         }
 
-        .sidebar-header {
-            padding: 30px 24px 20px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
+        .sidebar.collapsed {
+            width: 70px;
+            padding: 20px 10px;
         }
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .logo-icon {
-            width: 48px;
-            height: 48px;
-            background: white;
-            border-radius: 12px;
+        .toggle-sidebar-btn {
+            position: absolute;
+            top: 20px;
+            right: -15px;
+            width: 30px;
+            height: 30px;
+            background: rgba(0, 212, 255, 0.3);
+            border: 1px solid rgba(0, 212, 255, 0.5);
+            border-radius: 50%;
+            color: #00d4ff;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            font-size: 16px;
+            z-index: 10;
+            transition: all 0.3s;
         }
 
-        .logo-text h1 {
-            font-size: 24px;
+        .toggle-sidebar-btn:hover {
+            background: rgba(0, 212, 255, 0.5);
+            transform: scale(1.1);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+            transition: all 0.3s;
+        }
+
+        .brand-logo {
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+            flex-shrink: 0;
+        }
+
+        .brand-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .brand-text {
+            transition: all 0.3s;
+        }
+
+        .sidebar.collapsed .brand-text {
+            display: none;
+        }
+
+        .brand-text h1 {
+            color: #00d4ff;
+            font-size: 22px;
             font-weight: 700;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
         }
 
-        .logo-text p {
-            font-size: 12px;
-            opacity: 0.9;
+        .brand-text p {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        .stats-grid {
+        .stats-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
+            margin-bottom: 25px;
+            transition: all 0.3s;
         }
 
-        .stat-card {
-            background: rgba(255,255,255,0.2);
-            backdrop-filter: blur(10px);
+        .sidebar.collapsed .stats-container {
+            grid-template-columns: 1fr;
+        }
+
+        .stat-box {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
             padding: 12px;
-            border-radius: 12px;
+            border-radius: 10px;
             text-align: center;
+            transition: all 0.3s;
         }
 
         .stat-icon {
             font-size: 24px;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
 
         .stat-value {
-            font-size: 18px;
+            font-size: 20px;
             font-weight: 700;
+            color: #00d4ff;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
         }
 
         .stat-label {
             font-size: 10px;
-            opacity: 0.9;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            margin-top: 3px;
+            transition: all 0.3s;
         }
 
-        .sidebar-content {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
+        .sidebar.collapsed .stat-label {
+            display: none;
         }
 
-        .menu-section {
-            margin-bottom: 24px;
+        .nav-section {
+            margin-bottom: 20px;
         }
 
-        .section-title {
+        .nav-title {
+            color: rgba(255, 255, 255, 0.4);
             font-size: 11px;
-            font-weight: 700;
-            color: #999;
+            font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 1px;
-            margin-bottom: 12px;
-            padding: 0 8px;
+            margin-bottom: 10px;
+            padding-left: 10px;
+            transition: all 0.3s;
         }
 
-        .menu-item {
+        .sidebar.collapsed .nav-title {
+            display: none;
+        }
+
+        .nav-item {
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 12px;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
+            padding: 12px 15px;
+            color: rgba(255, 255, 255, 0.7);
             text-decoration: none;
-            color: #333;
-            margin-bottom: 6px;
-        }
-
-        .menu-item:hover {
-            background: #f0f0f0;
-            transform: translateX(4px);
-        }
-
-        .menu-item.active {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-        }
-
-        .menu-icon {
-            width: 40px;
-            height: 40px;
-            background: #f8f8f8;
             border-radius: 10px;
-            display: flex;
-            align-items: center;
+            margin-bottom: 5px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .sidebar.collapsed .nav-item {
             justify-content: center;
+            padding: 12px;
+        }
+
+        .nav-item:hover {
+            background: rgba(0, 212, 255, 0.15);
+            color: #00d4ff;
+            transform: translateX(3px);
+        }
+
+        .sidebar.collapsed .nav-item:hover {
+            transform: translateX(0) scale(1.1);
+        }
+
+        .nav-item.active {
+            background: rgba(0, 212, 255, 0.25);
+            color: #00d4ff;
+            border-left: 3px solid #00d4ff;
+        }
+
+        .nav-icon {
             font-size: 20px;
-        }
-
-        .menu-item.active .menu-icon {
-            background: rgba(255,255,255,0.2);
-        }
-
-        .menu-label {
-            font-weight: 500;
-            font-size: 14px;
-        }
-
-        .upgrade-box {
-            background: linear-gradient(135deg, #f093fb, #f5576c);
-            padding: 20px;
-            border-radius: 16px;
-            color: white;
+            width: 24px;
             text-align: center;
-            margin-top: auto;
+            flex-shrink: 0;
         }
 
-        .upgrade-box h3 {
-            font-size: 16px;
+        .nav-label {
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .sidebar.collapsed .nav-label {
+            display: none;
+        }
+
+        .upgrade-banner {
+            margin-top: auto;
+            background: linear-gradient(135deg, #00d4ff, #0099ff);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            transition: all 0.3s;
+        }
+
+        .sidebar.collapsed .upgrade-banner {
+            padding: 15px 10px;
+        }
+
+        .upgrade-banner h3 {
+            font-size: 15px;
             margin-bottom: 8px;
         }
 
-        .upgrade-box p {
-            font-size: 12px;
+        .sidebar.collapsed .upgrade-banner h3,
+        .sidebar.collapsed .upgrade-banner p {
+            display: none;
+        }
+
+        .upgrade-banner p {
+            font-size: 11px;
             opacity: 0.9;
             margin-bottom: 12px;
         }
 
         .upgrade-btn {
             background: white;
-            color: #f5576c;
+            color: #0099ff;
             border: none;
-            padding: 12px 24px;
-            border-radius: 10px;
+            padding: 10px 20px;
+            border-radius: 8px;
             font-weight: 700;
             cursor: pointer;
             width: 100%;
-            transition: all 0.2s;
+            transition: all 0.3s;
         }
 
-        .upgrade-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        .sidebar.collapsed .upgrade-btn {
+            padding: 8px;
+            font-size: 12px;
         }
 
-        /* Main Content Area */
-        .main-content {
+        /* Main Content */
+        .main-area {
             flex: 1;
             display: flex;
             flex-direction: column;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-            overflow: hidden;
         }
 
-        .top-bar {
-            padding: 20px 30px;
-            background: white;
-            border-bottom: 2px solid #f0f0f0;
+        .top-header {
+            padding: 18px 30px;
+            background: rgba(10, 15, 30, 0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 212, 255, 0.2);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -225,104 +312,99 @@
         .page-title {
             font-size: 24px;
             font-weight: 700;
-            color: #333;
+            color: white;
         }
 
-        .top-actions {
+        .header-actions {
             display: flex;
-            gap: 12px;
+            gap: 15px;
             align-items: center;
         }
 
-        .timer-display {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 50px;
+        .timer {
+            background: rgba(0, 212, 255, 0.2);
+            color: #00d4ff;
+            padding: 8px 20px;
+            border-radius: 20px;
             font-weight: 700;
-            font-size: 14px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        .action-btn {
-            width: 44px;
-            height: 44px;
-            background: #f8f8f8;
-            border: none;
-            border-radius: 12px;
-            font-size: 20px;
+        .user-btn {
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 212, 255, 0.2);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            transition: all 0.2s;
+            color: #00d4ff;
+            font-size: 20px;
+            transition: all 0.3s;
         }
 
-        .action-btn:hover {
-            background: #e8e8e8;
+        .user-btn:hover {
+            background: rgba(0, 212, 255, 0.3);
             transform: scale(1.05);
         }
 
-        .categories {
-            padding: 16px 30px;
-            background: #fafafa;
+        .categories-bar {
+            padding: 15px 30px;
+            background: rgba(10, 15, 30, 0.7);
+            backdrop-filter: blur(10px);
             display: flex;
             gap: 12px;
             overflow-x: auto;
         }
 
-        .category-pill {
+        .category-btn {
             padding: 10px 24px;
-            background: white;
-            border: 2px solid #e0e0e0;
-            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            color: rgba(255, 255, 255, 0.7);
+            border-radius: 25px;
             cursor: pointer;
-            font-weight: 600;
             font-size: 14px;
-            color: #666;
-            white-space: nowrap;
             transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
         }
 
-        .category-pill:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        .category-btn.active {
+            background: rgba(0, 212, 255, 0.3);
+            color: #00d4ff;
+            border-color: #00d4ff;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
         }
 
-        .category-pill.active {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border-color: transparent;
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .chat-area {
+        .chat-content {
             flex: 1;
             padding: 30px;
             overflow-y: auto;
-            background: linear-gradient(to bottom, #fafafa 0%, white 100%);
         }
 
-        .messages-container {
+        .messages {
             max-width: 900px;
             margin: 0 auto;
         }
 
         .message {
             display: flex;
-            gap: 16px;
-            margin-bottom: 24px;
-            animation: slideIn 0.3s ease;
+            gap: 15px;
+            margin-bottom: 25px;
+            animation: fadeIn 0.3s;
         }
 
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .message.user {
@@ -330,53 +412,42 @@
         }
 
         .msg-avatar {
-            width: 44px;
-            height: 44px;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
+            background: linear-gradient(135deg, #00d4ff, #0099ff);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 22px;
             flex-shrink: 0;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
         }
 
-        .message.ai .msg-avatar {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-        }
-
-        .message.user .msg-avatar {
-            background: linear-gradient(135deg, #f093fb, #f5576c);
-        }
-
-        .msg-bubble {
+        .msg-content {
+            background: rgba(10, 15, 30, 0.9);
+            backdrop-filter: blur(20px);
+            padding: 15px 20px;
+            border-radius: 20px;
             max-width: 70%;
-            padding: 16px 20px;
-            border-radius: 20px;
-            line-height: 1.6;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
-
-        .message.ai .msg-bubble {
-            background: white;
-            color: #333;
-            border-bottom-left-radius: 4px;
-        }
-
-        .message.user .msg-bubble {
-            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
-            border-bottom-right-radius: 4px;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            line-height: 1.6;
         }
 
-        .typing-indicator {
+        .message.user .msg-content {
+            background: rgba(0, 212, 255, 0.2);
+            border-color: rgba(0, 212, 255, 0.4);
+            color: #00d4ff;
+        }
+
+        .typing {
             display: none;
-            padding: 16px 20px;
-            background: white;
+            padding: 15px 20px;
+            background: rgba(10, 15, 30, 0.9);
+            border: 1px solid rgba(0, 212, 255, 0.2);
             border-radius: 20px;
-            border-bottom-left-radius: 4px;
             width: fit-content;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
 
         .typing-dots {
@@ -385,9 +456,9 @@
         }
 
         .typing-dots span {
-            width: 10px;
-            height: 10px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            width: 8px;
+            height: 8px;
+            background: #00d4ff;
             border-radius: 50%;
             animation: bounce 1.4s infinite;
         }
@@ -400,73 +471,66 @@
             30% { transform: translateY(-8px); }
         }
 
-        .input-section {
+        .input-area {
             padding: 20px 30px;
-            background: white;
-            border-top: 2px solid #f0f0f0;
+            background: rgba(10, 15, 30, 0.9);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(0, 212, 255, 0.2);
         }
 
         .input-wrapper {
             max-width: 900px;
             margin: 0 auto;
             display: flex;
-            gap: 12px;
-            align-items: center;
+            gap: 15px;
         }
 
         .msg-input {
             flex: 1;
-            padding: 16px 24px;
-            border: 2px solid #e0e0e0;
-            border-radius: 50px;
+            padding: 15px 25px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 25px;
+            color: white;
             font-size: 15px;
             outline: none;
             transition: all 0.3s;
         }
 
+        .msg-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
         .msg-input:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            border-color: #00d4ff;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
         }
 
         .send-btn {
-            width: 52px;
-            height: 52px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #00d4ff, #0099ff);
             border: none;
             border-radius: 50%;
+            color: white;
             font-size: 20px;
             cursor: pointer;
-            transition: all 0.3s;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+            transition: all 0.3s;
         }
 
         .send-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.6);
-        }
-
-        .send-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+            transform: scale(1.05);
         }
 
         @media (max-width: 768px) {
-            .app-wrapper {
-                padding: 0;
-                gap: 0;
-            }
-
             .sidebar {
                 position: fixed;
-                left: -280px;
+                left: -300px;
                 z-index: 1000;
-                height: 100vh;
-                border-radius: 0;
                 transition: left 0.3s;
             }
 
@@ -474,119 +538,141 @@
                 left: 0;
             }
 
-            .main-content {
-                border-radius: 0;
+            .toggle-sidebar-btn {
+                right: auto;
+                left: 310px;
+            }
+
+            .sidebar.open .toggle-sidebar-btn {
+                left: 285px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="app-wrapper">
+    <div class="app-container">
         <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="logo">
-                    <div class="logo-icon">✨</div>
-                    <div class="logo-text">
-                        <h1>Aria AI</h1>
-                        <p>Creative Assistant</p>
-                    </div>
+        <aside class="sidebar" id="sidebar">
+            <button class="toggle-sidebar-btn" onclick="toggleSidebar()">☰</button>
+            
+            <div class="brand">
+                <div class="brand-logo">
+                    <img src="/static/images/logo2.png" alt="Aria AI" 
+                         onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✈️</text></svg>'">
                 </div>
-
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon">🎮</div>
-                        <div class="stat-value" id="lvl">1</div>
-                        <div class="stat-label">Level</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">⭐</div>
-                        <div class="stat-value" id="xp">0</div>
-                        <div class="stat-label">XP</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">🔥</div>
-                        <div class="stat-value" id="streak">0</div>
-                        <div class="stat-label">Streak</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">💬</div>
-                        <div class="stat-value" id="msgs">0</div>
-                        <div class="stat-label">Chats</div>
-                    </div>
+                <div class="brand-text">
+                    <h1>Aria AI</h1>
+                    <p>Aviation Intelligence</p>
                 </div>
             </div>
 
-            <div class="sidebar-content">
-                <div class="menu-section">
-                    <div class="section-title">Main</div>
-                    <a href="#" class="menu-item active">
-                        <div class="menu-icon">💬</div>
-                        <div class="menu-label">Chat</div>
-                    </a>
-                    <a href="/learning" class="menu-item">
-                        <div class="menu-icon">📚</div>
-                        <div class="menu-label">Learning</div>
-                    </a>
-                    <a href="/history" class="menu-item">
-                        <div class="menu-icon">📜</div>
-                        <div class="menu-label">History</div>
-                    </a>
+            <div class="stats-container">
+                <div class="stat-box">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-value" id="level">1</div>
+                    <div class="stat-label">Level</div>
                 </div>
+                <div class="stat-box">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-value" id="xp">0</div>
+                    <div class="stat-label">XP</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-icon">🔥</div>
+                    <div class="stat-value" id="streak">0</div>
+                    <div class="stat-label">Streak</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-icon">💬</div>
+                    <div class="stat-value" id="chats">0</div>
+                    <div class="stat-label">Chats</div>
+                </div>
+            </div>
 
-                <div class="menu-section">
-                    <div class="section-title">Account</div>
-                    <a href="/profile" class="menu-item">
-                        <div class="menu-icon">👤</div>
-                        <div class="menu-label">Profile</div>
-                    </a>
-                    <a href="#" class="menu-item">
-                        <div class="menu-icon">⚙️</div>
-                        <div class="menu-label">Settings</div>
-                    </a>
-                    <a href="/logout" class="menu-item">
-                        <div class="menu-icon">🚪</div>
-                        <div class="menu-label">Logout</div>
-                    </a>
-                </div>
+            <div class="nav-section">
+                <div class="nav-title">Main</div>
+                <a href="#" class="nav-item active">
+                    <span class="nav-icon">💬</span>
+                    <span class="nav-label">Chat</span>
+                </a>
+                <a href="/games" class="nav-item">
+                    <span class="nav-icon">🎮</span>
+                    <span class="nav-label">Games</span>
+                </a>
+                <a href="/learning" class="nav-item">
+                    <span class="nav-icon">📚</span>
+                    <span class="nav-label">Learning</span>
+                </a>
+                <a href="/history" class="nav-item">
+                    <span class="nav-icon">📜</span>
+                    <span class="nav-label">History</span>
+                </a>
+            </div>
 
-                <div class="upgrade-box">
-                    <h3>⭐ Go Premium</h3>
-                    <p>Unlimited chats & features</p>
-                    <button class="upgrade-btn">Upgrade - ₹89/mo</button>
-                </div>
+            <div class="nav-section">
+                <div class="nav-title">Account</div>
+                <a href="/profile" class="nav-item">
+                    <span class="nav-icon">👤</span>
+                    <span class="nav-label">Profile</span>
+                </a>
+                <a href="/admin" class="nav-item" id="adminNav" style="display: none;">
+                    <span class="nav-icon">👨‍💼</span>
+                    <span class="nav-label">Admin</span>
+                </a>
+                <a href="/settings" class="nav-item">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-label">Settings</span>
+                </a>
+                <a href="/logout" class="nav-item">
+                    <span class="nav-icon">🚪</span>
+                    <span class="nav-label">Logout</span>
+                </a>
+            </div>
+
+            <div class="upgrade-banner">
+                <h3>⭐ Premium</h3>
+                <p>Unlock all features</p>
+                <button class="upgrade-btn" onclick="alert('Coming soon!')">₹89/mo</button>
             </div>
         </aside>
 
         <!-- Main Content -->
-        <main class="main-content">
-            <div class="top-bar">
+        <main class="main-area">
+            <div class="top-header">
                 <h1 class="page-title">AI Assistant</h1>
-                <div class="top-actions">
-                    <div class="timer-display">
+                <div class="header-actions">
+                    <div class="timer">
                         <span>⏱️</span>
-                        <span id="time">20:00</span>
+                        <span id="timer">20:00</span>
                     </div>
-                    <button class="action-btn" onclick="location.href='/profile'">👤</button>
+                    <button class="user-btn" onclick="location.href='/profile'">👤</button>
                 </div>
             </div>
 
-            <div class="categories">
-                <button class="category-pill active" onclick="selCat(this, 'general')">🌐 General</button>
-                <button class="category-pill" onclick="selCat(this, 'aviation')">✈️ Aviation</button>
-                <button class="category-pill" onclick="selCat(this, 'career')">💼 Career</button>
-                <button class="category-pill" onclick="selCat(this, 'study')">📚 Study</button>
+            <div class="categories-bar">
+                <button class="category-btn active" onclick="setCat(this, 'general')">
+                    <span>🌐</span> General
+                </button>
+                <button class="category-btn" onclick="setCat(this, 'aviation')">
+                    <span>✈️</span> Aviation
+                </button>
+                <button class="category-btn" onclick="setCat(this, 'career')">
+                    <span>💼</span> Career
+                </button>
+                <button class="category-btn" onclick="setCat(this, 'study')">
+                    <span>📚</span> Study
+                </button>
             </div>
 
-            <div class="chat-area">
-                <div class="messages-container" id="msgs">
-                    <div class="message ai">
+            <div class="chat-content">
+                <div class="messages" id="msgs">
+                    <div class="message">
                         <div class="msg-avatar">🤖</div>
-                        <div class="msg-bubble">
-                            Hey there! 👋 I'm Aria, your creative AI assistant. Let's create something amazing together!
+                        <div class="msg-content">
+                            Hey there! 👋 I'm Aria, your aviation AI assistant. How can I help you today?
                         </div>
                     </div>
-                    <div class="typing-indicator" id="typing">
+                    <div class="typing" id="typing">
                         <div class="typing-dots">
                             <span></span>
                             <span></span>
@@ -596,10 +682,10 @@
                 </div>
             </div>
 
-            <div class="input-section">
+            <div class="input-area">
                 <div class="input-wrapper">
                     <input type="text" class="msg-input" id="inp" 
-                           placeholder="What's on your mind?" 
+                           placeholder="Transmit your query..." 
                            onkeypress="if(event.key==='Enter')send()">
                     <button class="send-btn" id="btn" onclick="send()">▶</button>
                 </div>
@@ -614,26 +700,30 @@
             if (t > 0) {
                 t--;
                 const m = Math.floor(t/60), s = t%60;
-                document.getElementById('time').textContent = 
+                document.getElementById('timer').textContent = 
                     `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
             }
         }, 1000);
 
-        function selCat(el, c) {
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+        }
+
+        function setCat(el, c) {
             cat = c;
-            document.querySelectorAll('.category-pill').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
             el.classList.add('active');
         }
 
         function add(txt, usr) {
             const d = document.createElement('div');
-            d.className = `message ${usr ? 'user' : 'ai'}`;
+            d.className = `message ${usr ? 'user' : ''}`;
             d.innerHTML = `
                 <div class="msg-avatar">${usr ? '👤' : '🤖'}</div>
-                <div class="msg-bubble">${txt}</div>
+                <div class="msg-content">${txt}</div>
             `;
             document.getElementById('msgs').insertBefore(d, document.getElementById('typing'));
-            document.querySelector('.chat-area').scrollTop = 999999;
+            document.querySelector('.chat-content').scrollTop = 999999;
         }
 
         async function send() {
@@ -644,7 +734,7 @@
             add(msg, true);
             inp.value = '';
             cnt++;
-            document.getElementById('msgs').textContent = cnt;
+            document.getElementById('chats').textContent = cnt;
 
             document.getElementById('typing').style.display = 'block';
             document.getElementById('btn').disabled = true;
@@ -663,7 +753,7 @@
                 if (data.success) {
                     add(data.response, false);
                     if (data.xp) document.getElementById('xp').textContent = data.xp;
-                    if (data.level) document.getElementById('lvl').textContent = data.level;
+                    if (data.level) document.getElementById('level').textContent = data.level;
                 } else {
                     add(data.error || 'Error!', false);
                 }
@@ -673,6 +763,22 @@
                 add('Connection error!', false);
             }
         }
+
+        // Load user stats and check admin
+        fetch('/api/profile')
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('level').textContent = data.user.level || 1;
+                    document.getElementById('xp').textContent = data.user.xp || 0;
+                    document.getElementById('streak').textContent = data.user.streak || 0;
+                    document.getElementById('chats').textContent = data.user.messages_count || 0;
+                    
+                    if (data.user.is_admin) {
+                        document.getElementById('adminNav').style.display = 'flex';
+                    }
+                }
+            });
 
         document.getElementById('inp').focus();
     </script>

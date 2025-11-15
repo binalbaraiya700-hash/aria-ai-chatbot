@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Aro-Nav AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .back-btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        .settings-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .setting-group {
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .setting-group:last-child {
+            border-bottom: none;
+        }
+
+        .setting-group h2 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+
+        .setting-info {
+            flex: 1;
+        }
+
+        .setting-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .setting-desc {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: #ccc;
+            border-radius: 13px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: #667eea;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: left 0.3s;
+        }
+
+        .toggle-switch.active::after {
+            left: 26px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-danger {
+            background: #ff5252;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        select {
+            padding: 10px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .danger-zone {
+            background: #fff5f5;
+            border: 2px solid #ff5252;
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .danger-zone h3 {
+            color: #ff5252;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-btn">← Back to Dashboard</a>
+
+        <div class="settings-card">
+            <h1>⚙️ Settings</h1>
+            <p class="subtitle">Manage your account preferences</p>
+
+            <!-- Account Settings -->
+            <div class="setting-group">
+                <h2>👤 Account Settings</h2>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Profile Logo</div>
+                        <div class="setting-desc">Upload your custom logo (PNG, JPG)</div>
+                    </div>
+                    <input type="file" id="logoInput" accept="image/*" style="display: none;" onchange="uploadLogo()">
+                    <button class="btn btn-primary" onclick="document.getElementById('logoInput').click()">Upload Logo</button>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Username</div>
+                        <div class="setting-desc">Change your display name</div>
+                    </div>
+                    <button class="btn btn-primary" onclick="alert('Feature coming soon!')">Edit</button>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Email</div>
+                        <div class="setting-desc">Update your email address</div>
+                    </div>
+                    <button class="btn btn-primary" onclick="alert('Feature coming soon!')">Edit</button>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Password</div>
+                        <div class="setting-desc">Change your password</div>
+                    </div>
+                    <button class="btn btn-primary" onclick="alert('Feature coming soon!')">Change</button>
+                </div>
+            </div>
+
+            <!-- Preferences -->
+            <div class="setting-group">
+                <h2>🎨 Preferences</h2>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Dark Mode</div>
+                        <div class="setting-desc">Toggle dark theme</div>
+                    </div>
+                    <div class="toggle-switch" onclick="toggleSwitch(this)"></div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Language</div>
+                        <div class="setting-desc">Select your preferred language</div>
+                    </div>
+                    <select>
+                        <option>English</option>
+                        <option>Hindi</option>
+                        <option>Spanish</option>
+                    </select>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Experience Level</div>
+                        <div class="setting-desc">Your aviation experience</div>
+                    </div>
+                    <select>
+                        <option>Beginner</option>
+                        <option>Intermediate</option>
+                        <option>Advanced</option>
+                        <option>Expert</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Notifications -->
+            <div class="setting-group">
+                <h2>🔔 Notifications</h2>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Email Notifications</div>
+                        <div class="setting-desc">Receive updates via email</div>
+                    </div>
+                    <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Level Up Alerts</div>
+                        <div class="setting-desc">Get notified when you level up</div>
+                    </div>
+                    <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+                </div>
+            </div>
+
+            <!-- Privacy -->
+            <div class="setting-group">
+                <h2>🔒 Privacy & Security</h2>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Two-Factor Authentication</div>
+                        <div class="setting-desc">Add extra security to your account</div>
+                    </div>
+                    <button class="btn btn-primary" onclick="alert('Feature coming soon!')">Enable</button>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Chat History</div>
+                        <div class="setting-desc">Save your conversations</div>
+                    </div>
+                    <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+                </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="danger-zone">
+                <h3>⚠️ Danger Zone</h3>
+                <p style="color: #666; margin-bottom: 15px;">These actions are irreversible</p>
+                
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-danger" onclick="if(confirm('Clear all chat history?')) alert('History cleared!')">
+                        Clear History
+                    </button>
+                    <button class="btn btn-danger" onclick="if(confirm('Delete your account? This cannot be undone!')) alert('Account deletion requested')">
+                        Delete Account
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleSwitch(el) {
+            el.classList.toggle('active');
+        }
+    </script>
+</body>
+</html>

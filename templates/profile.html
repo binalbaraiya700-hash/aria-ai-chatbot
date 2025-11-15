@@ -3,765 +3,388 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aria AI - Your Intelligent Assistant</title>
-    <meta name="description" content="AI-powered assistant for aviation career guidance">
-    <meta name="theme-color" content="#667eea">
-    <link rel="manifest" href="/static/manifest.json">
-    <link rel="apple-touch-icon" href="/static/icon-192.png">
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Profile - Aria AI</title>
     <style>
-        :root {
-            --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --bg-chat: #f5f5f5;
-            --bg-message: white;
-            --text-primary: #333;
-            --text-secondary: #666;
-            --border-color: #e0e0e0;
-            --input-bg: white;
-            --header-text: white;
-        }
-
-        [data-theme="dark"] {
-            --bg-primary: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            --bg-chat: #0f1419;
-            --bg-message: #1a1d23;
-            --text-primary: #e4e6eb;
-            --text-secondary: #b0b3b8;
-            --border-color: #2d3748;
-            --input-bg: #1a1d23;
-            --header-text: #e4e6eb;
-        }
-
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--bg-primary);
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
         }
 
         .container {
-            width: 95%;
-            max-width: 1200px;
-            height: 90vh;
-            background: var(--bg-chat);
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
+            max-width: 1000px;
+            margin: 0 auto;
         }
 
         .header {
-            background: var(--bg-primary);
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: var(--header-text);
-        }
-
-        .header-left h1 {
-            font-size: 24px;
-            margin-bottom: 5px;
-        }
-
-        .header-left .subtitle {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-
-        .header-right {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .btn-primary {
-            background: white;
-            color: #667eea;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255,255,255,0.3);
-        }
-
-        .theme-toggle {
-            background: rgba(255,255,255,0.2);
-            border: none;
+            text-align: center;
             color: white;
-            padding: 8px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 18px;
+            margin-bottom: 30px;
         }
 
-        .stats-bar {
-            background: rgba(102, 126, 234, 0.1);
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .stat-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-primary);
-        }
-
-        .stat-item .icon {
-            font-size: 20px;
-        }
-
-        .stat-value {
-            font-weight: bold;
-            color: #667eea;
-        }
-
-        .categories {
-            display: flex;
-            gap: 10px;
-            padding: 15px 20px;
-            overflow-x: auto;
-            background: var(--bg-chat);
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .category-btn {
-            padding: 8px 16px;
-            border: 2px solid var(--border-color);
-            background: var(--bg-message);
-            color: var(--text-primary);
-            border-radius: 20px;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: all 0.3s ease;
-        }
-
-        .category-btn.active {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-
-        .quick-replies {
-            padding: 10px 20px;
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            background: var(--bg-chat);
-        }
-
-        .quick-reply {
-            padding: 6px 12px;
-            background: var(--bg-message);
-            border: 1px solid var(--border-color);
-            border-radius: 15px;
-            cursor: pointer;
-            font-size: 13px;
-            color: var(--text-primary);
-            white-space: nowrap;
-            transition: all 0.2s ease;
-        }
-
-        .quick-reply:hover {
-            background: #667eea;
-            color: white;
-        }
-
-        .chat-area {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            background: var(--bg-chat);
-        }
-
-        .message {
-            margin-bottom: 20px;
-            display: flex;
-            gap: 10px;
-        }
-
-        .message.user {
-            flex-direction: row-reverse;
-        }
-
-        .message-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            flex-shrink: 0;
-        }
-
-        .message.user .message-avatar {
-            background: #667eea;
-        }
-
-        .message.ai .message-avatar {
-            background: #764ba2;
-        }
-
-        .message-content {
-            max-width: 70%;
-            padding: 15px;
-            border-radius: 15px;
-            background: var(--bg-message);
-            color: var(--text-primary);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        .message.user .message-content {
-            background: #667eea;
-            color: white;
-        }
-
-        .input-area {
-            padding: 20px;
-            background: var(--bg-chat);
-            border-top: 1px solid var(--border-color);
-        }
-
-        .document-upload {
-            display: flex;
-            gap: 10px;
+        .header h1 {
+            font-size: 36px;
             margin-bottom: 10px;
         }
 
-        .upload-btn {
-            padding: 8px 15px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .input-box {
-            display: flex;
-            gap: 10px;
-        }
-
-        #messageInput {
-            flex: 1;
-            padding: 15px;
-            border: 2px solid var(--border-color);
-            border-radius: 12px;
-            font-size: 16px;
-            background: var(--input-bg);
-            color: var(--text-primary);
-        }
-
-        #sendBtn {
-            padding: 15px 30px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        #sendBtn:hover {
-            background: #5568d3;
-        }
-
-        #sendBtn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-
-        .typing-indicator {
-            display: none;
-            padding: 10px 15px;
-            background: var(--bg-message);
-            border-radius: 15px;
-            width: fit-content;
-        }
-
-        .typing-dots {
-            display: flex;
-            gap: 5px;
-        }
-
-        .typing-dots span {
-            width: 8px;
-            height: 8px;
-            background: #667eea;
-            border-radius: 50%;
-            animation: typing 1.4s infinite;
-        }
-
-        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
-        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-
-        @keyframes typing {
-            0%, 60%, 100% { transform: translateY(0); }
-            30% { transform: translateY(-10px); }
-        }
-
-        .limit-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .limit-content {
+        .back-btn {
+            display: inline-block;
+            padding: 12px 24px;
             background: white;
-            padding: 40px;
-            border-radius: 20px;
-            text-align: center;
-            max-width: 400px;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            transition: all 0.3s;
         }
 
-        .limit-content h2 {
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
             margin-bottom: 20px;
+        }
+
+        .profile-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            margin: 0 auto 20px;
+        }
+
+        .profile-info h2 {
+            text-align: center;
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .profile-email {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .profile-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
             color: #667eea;
         }
 
-        .level-up-animation {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .info-section {
+            margin-bottom: 24px;
+        }
+
+        .info-section h3 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .info-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #e0e7ff;
+            color: #667eea;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge.premium {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white;
+        }
+
+        .badge.admin {
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
-            padding: 30px 50px;
-            border-radius: 20px;
-            font-size: 24px;
-            font-weight: bold;
-            z-index: 1001;
-            animation: levelUp 2s ease-out;
         }
 
-        @keyframes levelUp {
-            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        .achievements {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 15px;
         }
 
-        .pwa-install {
-            display: none;
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #667eea;
-            color: white;
-            padding: 15px 25px;
+        .achievement {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .achievement-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .achievement-name {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px;
+            border: none;
             border-radius: 10px;
+            font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            z-index: 999;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
 
         @media (max-width: 768px) {
-            .container {
-                width: 100%;
-                height: 100vh;
-                border-radius: 0;
+            .profile-grid {
+                grid-template-columns: 1fr;
             }
 
-            .message-content {
-                max-width: 85%;
-            }
-
-            .stats-bar {
-                font-size: 12px;
+            .header h1 {
+                font-size: 28px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <a href="/" class="back-btn">← Back to Dashboard</a>
+
         <div class="header">
-            <div class="header-left">
-                <h1>✈️ Aria AI</h1>
-                <p class="subtitle">Your Intelligent Aviation Assistant</p>
-            </div>
-            <div class="header-right">
-                <div class="stat-item" id="timerDisplay">
-                    <span class="icon">⏱️</span>
-                    <span class="stat-value">{{ time_remaining }}</span>
+            <h1>👤 My Profile</h1>
+        </div>
+
+        <div class="profile-grid">
+            <!-- Left Card -->
+            <div class="profile-card">
+                <div class="profile-avatar">
+                    <img src="/static/images/logo2.png" alt="Profile" 
+                         style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;" 
+                         onerror="this.parentElement.innerHTML='👤'">
                 </div>
-                <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
-                <button class="btn btn-primary" onclick="location.href='/profile'">👤 Profile</button>
-                {% if is_admin %}
-                <button class="btn btn-primary" onclick="location.href='/admin'">👨‍💼 Admin</button>
-                {% endif %}
-                <button class="btn btn-primary" onclick="location.href='/history'">📜 History</button>
-                <button class="btn btn-primary" onclick="location.href='/logout'">Logout</button>
-            </div>
-        </div>
+                <div class="profile-info">
+                    <h2 id="userName">Loading...</h2>
+                    <p class="profile-email" id="userEmail">email@example.com</p>
+                    
+                    <div id="userBadges" style="text-align: center; margin-bottom: 20px;">
+                        <!-- Badges will be added here -->
+                    </div>
+                </div>
 
-        <div class="stats-bar">
-            <div class="stat-item">
-                <span class="icon">🎮</span>
-                <span>Level <span class="stat-value">{{ user.level }}</span></span>
-            </div>
-            <div class="stat-item">
-                <span class="icon">⭐</span>
-                <span>XP: <span class="stat-value">{{ user.xp }}</span></span>
-            </div>
-            <div class="stat-item">
-                <span class="icon">🔥</span>
-                <span>Streak: <span class="stat-value">{{ user.streak_days }}</span> days</span>
-            </div>
-            <div class="stat-item">
-                <span class="icon">💬</span>
-                <span>Messages: <span class="stat-value">{{ user.messages|length }}</span></span>
-            </div>
-            {% if not user.is_premium %}
-            <button class="btn btn-primary" onclick="upgradePremium()">
-                ⭐ Upgrade - ₹{{ user.premium_price }}/month
-            </button>
-            {% else %}
-            <div class="stat-item">
-                <span class="icon">⭐</span>
-                <span class="stat-value">Premium Active</span>
-            </div>
-            {% endif %}
-        </div>
+                <div class="profile-stats">
+                    <div class="stat-box">
+                        <div class="stat-value" id="userLevel">1</div>
+                        <div class="stat-label">Level</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="userXP">0</div>
+                        <div class="stat-label">XP Points</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="userStreak">0</div>
+                        <div class="stat-label">Day Streak</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="userMessages">0</div>
+                        <div class="stat-label">Messages</div>
+                    </div>
+                </div>
 
-        <div class="categories">
-            <button class="category-btn active" onclick="selectCategory('general')">🌐 General</button>
-            <button class="category-btn" onclick="selectCategory('aviation')">✈️ Aviation</button>
-            <button class="category-btn" onclick="selectCategory('career')">💼 Career</button>
-            <button class="category-btn" onclick="selectCategory('study')">📚 Study</button>
-        </div>
-
-        <div class="quick-replies" id="quickReplies"></div>
-
-        <div class="chat-area" id="chatArea">
-            <div class="typing-indicator" id="typingIndicator">
-                <div class="typing-dots">
-                    <span></span>
-                    <span></span>
-                    <span></span>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="location.href='/logout'">Logout</button>
+                    <button class="btn btn-secondary" onclick="alert('Settings coming soon!')">Settings</button>
                 </div>
             </div>
-        </div>
 
-        <div class="input-area">
-            <div class="document-upload">
-                <input type="file" id="fileInput" accept=".pdf" style="display: none;" onchange="uploadDocument()">
-                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-                    📄 Upload PDF
-                </button>
-                <span id="uploadStatus"></span>
+            <!-- Right Card -->
+            <div class="profile-card">
+                <div class="info-section">
+                    <h3>📊 Account Information</h3>
+                    <div class="info-row">
+                        <span class="info-label">Member Since</span>
+                        <span class="info-value" id="memberSince">Loading...</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Account Type</span>
+                        <span class="info-value" id="accountType">Free</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Experience Level</span>
+                        <span class="info-value" id="expLevel">Beginner</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Primary Interest</span>
+                        <span class="info-value" id="interest">General</span>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <h3>🏆 Achievements</h3>
+                    <div class="achievements" id="achievements">
+                        <div class="achievement">
+                            <div class="achievement-icon">🎯</div>
+                            <div class="achievement-name">First Chat</div>
+                        </div>
+                        <div class="achievement">
+                            <div class="achievement-icon">📚</div>
+                            <div class="achievement-name">Learner</div>
+                        </div>
+                        <div class="achievement">
+                            <div class="achievement-icon">⭐</div>
+                            <div class="achievement-name">Level 1</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <h3>📈 Activity Summary</h3>
+                    <div class="info-row">
+                        <span class="info-label">Total Chats</span>
+                        <span class="info-value" id="totalChats">0</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">This Week</span>
+                        <span class="info-value" id="weekChats">0</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Longest Streak</span>
+                        <span class="info-value" id="maxStreak">0 days</span>
+                    </div>
+                </div>
             </div>
-            <div class="input-box">
-                <input type="text" id="messageInput" placeholder="Type your message..." 
-                       onkeypress="if(event.key === 'Enter') sendMessage()">
-                <button id="sendBtn" onclick="sendMessage()">Send</button>
-            </div>
         </div>
-    </div>
-
-    <div class="limit-overlay" id="limitOverlay">
-        <div class="limit-content">
-            <h2>⏰ Time Limit Reached</h2>
-            <p>You've used your 20-minute daily limit!</p>
-            <p>Upgrade to Premium for unlimited chat time.</p>
-            <button class="btn btn-primary" onclick="upgradePremium()">
-                Upgrade Now - ₹{{ user.premium_price }}
-            </button>
-        </div>
-    </div>
-
-    <div class="level-up-animation" id="levelUpAnim">
-        🎉 Level Up! 🎉
-    </div>
-
-    <div class="pwa-install" id="pwaInstall" onclick="installPWA()">
-        📱 Install App
     </div>
 
     <script>
-        let timeRemaining = {{ time_remaining.split(':')[0]|int * 60 + time_remaining.split(':')[1]|int }};
-        let timerInterval;
-        let currentCategory = 'general';
-        let deferredPrompt;
-        let uploadedDocId = null;
-
-        const quickRepliesData = {
-            general: ['Hello!', 'How are you?', 'Tell me about yourself', 'What can you help with?'],
-            aviation: ['How to become a pilot?', 'Aircraft types', 'Aviation careers', 'Flight training'],
-            career: ['Career guidance', 'Resume tips', 'Interview prep', 'Skills needed'],
-            study: ['Study tips', 'Time management', 'Exam preparation', 'Learning methods']
-        };
-
-        // Theme toggle
-        function toggleTheme() {
-            const html = document.documentElement;
-            const currentTheme = html.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            html.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            
-            const btn = document.querySelector('.theme-toggle');
-            btn.textContent = newTheme === 'dark' ? '☀️' : '🌙';
-        }
-
-        // Load saved theme
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        if (savedTheme === 'dark') {
-            document.querySelector('.theme-toggle').textContent = '☀️';
-        }
-
-        // Category selection
-        function selectCategory(category) {
-            currentCategory = category;
-            document.querySelectorAll('.category-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            updateQuickReplies();
-        }
-
-        function updateQuickReplies() {
-            const container = document.getElementById('quickReplies');
-            container.innerHTML = '';
-            quickRepliesData[currentCategory].forEach(reply => {
-                const btn = document.createElement('button');
-                btn.className = 'quick-reply';
-                btn.textContent = reply;
-                btn.onclick = () => {
-                    document.getElementById('messageInput').value = reply;
-                    sendMessage();
-                };
-                container.appendChild(btn);
-            });
-        }
-
-        updateQuickReplies();
-
-        // Timer
-        function updateTimerDisplay() {
-            const minutes = Math.floor(timeRemaining / 60);
-            const seconds = timeRemaining % 60;
-            const display = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            document.getElementById('timerDisplay').querySelector('.stat-value').textContent = display;
-            
-            if (timeRemaining <= 0) {
-                clearInterval(timerInterval);
-            }
-        }
-
-        {% if not user.is_premium %}
-        timerInterval = setInterval(() => {
-            if (timeRemaining > 0) {
-                timeRemaining--;
-                updateTimerDisplay();
-            }
-        }, 1000);
-        {% endif %}
-
-        // Chat functions
-        function addMessage(text, isUser) {
-            const chatArea = document.getElementById('chatArea');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
-            
-            messageDiv.innerHTML = `
-                <div class="message-avatar">${isUser ? '👤' : '🤖'}</div>
-                <div class="message-content">${text}</div>
-            `;
-            
-            chatArea.insertBefore(messageDiv, document.getElementById('typingIndicator'));
-            chatArea.scrollTop = chatArea.scrollHeight;
-        }
-
-        async function sendMessage() {
-            const input = document.getElementById('messageInput');
-            const message = input.value.trim();
-            
-            if (!message) return;
-            
-            addMessage(message, true);
-            input.value = '';
-            
-            document.getElementById('typingIndicator').style.display = 'block';
-            document.getElementById('sendBtn').disabled = true;
-            
+        // Fetch user profile data
+        async function loadProfile() {
             try {
-                const response = await fetch('/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        message: uploadedDocId ? `[Document Question] ${message}` : message,
-                        category: currentCategory,
-                        doc_id: uploadedDocId
-                    })
-                });
-                
+                const response = await fetch('/api/profile');
                 const data = await response.json();
-                
-                document.getElementById('typingIndicator').style.display = 'none';
-                document.getElementById('sendBtn').disabled = false;
-                
-                if (data.limit_reached) {
-                    addMessage(data.response, false);
-                    document.getElementById('limitOverlay').style.display = 'flex';
-                } else {
-                    addMessage(data.response, false);
-                    
-                    if (data.time_remaining !== undefined) {
-                        timeRemaining = data.time_remaining;
-                        updateTimerDisplay();
-                    }
-                    
-                    if (data.level_up) {
-                        showLevelUp(data.level);
-                    }
-                    
-                    // Update stats
-                    document.querySelector('.stats-bar .stat-value').textContent = data.level;
-                    const xpElement = document.querySelectorAll('.stat-value')[1];
-                    if (xpElement) xpElement.textContent = data.total_xp;
-                    const streakElement = document.querySelectorAll('.stat-value')[2];
-                    if (streakElement) streakElement.textContent = data.streak;
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('typingIndicator').style.display = 'none';
-                document.getElementById('sendBtn').disabled = false;
-                addMessage('Error connecting to AI. Please try again.', false);
-            }
-        }
 
-        function showLevelUp(level) {
-            const anim = document.getElementById('levelUpAnim');
-            anim.textContent = `🎉 Level ${level}! 🎉`;
-            anim.style.display = 'block';
-            setTimeout(() => {
-                anim.style.display = 'none';
-            }, 2000);
-        }
-
-        // Document upload
-        async function uploadDocument() {
-            const fileInput = document.getElementById('fileInput');
-            const file = fileInput.files[0];
-            
-            if (!file) return;
-            
-            const formData = new FormData();
-            formData.append('file', file);
-            
-            document.getElementById('uploadStatus').textContent = 'Uploading...';
-            
-            try {
-                const response = await fetch('/upload-document', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const data = await response.json();
-                
                 if (data.success) {
-                    uploadedDocId = data.doc_id;
-                    document.getElementById('uploadStatus').textContent = '✅ ' + data.message;
-                    addMessage(`Document "${file.name}" uploaded! You can now ask questions about it.`, false);
-                } else {
-                    document.getElementById('uploadStatus').textContent = '❌ ' + data.error;
+                    const user = data.user;
+
+                    // Update profile info
+                    document.getElementById('userName').textContent = user.username || 'User';
+                    document.getElementById('userEmail').textContent = user.email || '';
+                    document.getElementById('userLevel').textContent = user.level || 1;
+                    document.getElementById('userXP').textContent = user.xp || 0;
+                    document.getElementById('userStreak').textContent = user.streak || 0;
+                    document.getElementById('userMessages').textContent = user.messages_count || 0;
+
+                    // Badges
+                    const badgesDiv = document.getElementById('userBadges');
+                    badgesDiv.innerHTML = '';
+                    
+                    if (user.is_premium) {
+                        badgesDiv.innerHTML += '<span class="badge premium">⭐ Premium</span> ';
+                    }
+                    if (user.is_admin) {
+                        badgesDiv.innerHTML += '<span class="badge admin">👨‍💼 Admin</span>';
+                    }
+
+                    // Account info
+                    const date = new Date(user.created_at);
+                    document.getElementById('memberSince').textContent = date.toLocaleDateString();
+                    document.getElementById('accountType').textContent = user.is_premium ? 'Premium' : 'Free';
+                    document.getElementById('expLevel').textContent = user.experience || 'Beginner';
+                    document.getElementById('interest').textContent = user.interest || 'General';
+
+                    // Activity
+                    document.getElementById('totalChats').textContent = user.messages_count || 0;
+                    document.getElementById('weekChats').textContent = user.messages_today || 0;
+                    document.getElementById('maxStreak').textContent = (user.streak || 0) + ' days';
                 }
             } catch (error) {
-                document.getElementById('uploadStatus').textContent = '❌ Upload failed';
+                console.error('Error loading profile:', error);
             }
         }
 
-        // Premium upgrade
-        function upgradePremium() {
-            fetch('/create-order', { method: 'POST' })
-                .then(res => res.json())
-                .then(data => {
-                    const options = {
-                        key: data.key,
-                        amount: data.amount,
-                        currency: data.currency,
-                        name: 'Aria AI Premium',
-                        description: 'Unlimited AI Chat Access',
-                        order_id: data.order_id,
-                        handler: function(response) {
-                            fetch('/payment-success', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(response)
-                            }).then(() => location.reload());
-                        }
-                    };
-                    
-                    const rzp = new Razorpay(options);
-                    rzp.open();
-                });
-        }
-
-        // PWA Installation
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            document.getElementById('pwaInstall').style.display = 'block';
-        });
-
-        function installPWA() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        console.log('PWA installed');
-                    }
-                    deferredPrompt = null;
-                    document.getElementById('pwaInstall').style.display = 'none';
-                });
-            }
-        }
-
-        // Register Service Worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js')
-                .then(reg => console.log('Service Worker registered'))
-                .catch(err => console.log('Service Worker registration failed'));
-        }
+        // Load profile on page load
+        loadProfile();
     </script>
 </body>
 </html>
