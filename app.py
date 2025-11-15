@@ -9,7 +9,7 @@ import json
 import secrets
 import google.generativeai as genai
 from dotenv import load_dotenv
-import PyPDF
+import PyPDF2
 import io
 
 # Load environment variables
@@ -216,7 +216,6 @@ def chat():
         while current_user.xp >= xp_needed:
             current_user.xp -= xp_needed
             current_user.level += 1
-            xp_needed = current_user.level * 100
         
         db.session.commit()
         
