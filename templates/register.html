@@ -68,7 +68,6 @@
             font-weight: 900;
             background: linear-gradient(135deg, #00d4ff, #0099ff);
             -webkit-background-clip: text;
-            background-clip: text;
             -webkit-text-fill-color: transparent;
             text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
             margin-bottom: 6px;
@@ -278,43 +277,23 @@
 
         <div id="registerForm">
             <div class="input-group">
-                <label for="username">Pilot Name *</label>
-                <input type="text" id="username" placeholder="Enter full name" required>
+                <label for="username">Full Name *</label>
+                <input type="text" id="username" placeholder="Enter your name" required>
             </div>
 
             <div class="input-group">
                 <label for="email">Email Address *</label>
-                <input type="email" id="email" placeholder="your.email@aviation.com" required>
+                <input type="email" id="email" placeholder="your.email@example.com" required>
             </div>
 
             <div class="input-group">
-                <label for="password">Security Code *</label>
-                <input type="password" id="password" placeholder="Create strong password" required>
+                <label for="password">Password *</label>
+                <input type="password" id="password" placeholder="Create password (min 6 characters)" required>
             </div>
 
             <div class="input-group">
-                <label for="confirmPassword">Confirm Security Code *</label>
+                <label for="confirmPassword">Confirm Password *</label>
                 <input type="password" id="confirmPassword" placeholder="Re-enter password" required>
-            </div>
-
-            <div class="input-group">
-                <label for="experience">Experience Level</label>
-                <select id="experience">
-                    <option value="beginner">Student Pilot</option>
-                    <option value="intermediate">Private Pilot</option>
-                    <option value="advanced">Commercial Pilot</option>
-                    <option value="expert">Airline Transport Pilot</option>
-                </select>
-            </div>
-
-            <div class="input-group">
-                <label for="interest">Primary Interest</label>
-                <select id="interest">
-                    <option value="aviation">Aviation Career</option>
-                    <option value="engineering">Aeronautical Engineering</option>
-                    <option value="training">Flight Training</option>
-                    <option value="general">General Knowledge</option>
-                </select>
             </div>
 
             <button type="button" class="register-button" onclick="handleRegister()">

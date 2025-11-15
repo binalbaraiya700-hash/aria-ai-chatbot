@@ -1,14 +1,12 @@
 Flask==3.0.0
-Flask-CORS==4.0.0
-Flask-Login==0.6.3
 Flask-SQLAlchemy==3.1.1
+Flask-Login==0.6.3
+Flask-CORS==4.0.0
 Werkzeug==3.0.1
-google-generativeai==0.3.2
+anthropic==0.18.1
 python-dotenv==1.0.0
-razorpay==1.4.1
-PyPDF2==3.0.1
 gunicorn==21.2.0
-
-# Additional dependencies for production
-wheel==0.41.2
-setuptools==68.2.2
+psycopg2-binary==2.9.9
+Pillow==10.2.0
+PyPDF2==3.0.1
+python-multipart==0.0.9

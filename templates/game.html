@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Games - ARIA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .navbar {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00d4ff, #0099ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            margin: 0 15px;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #00d4ff;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 0 30px;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 36px;
+            text-align: center;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #00d4ff, #0099ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 40px;
+            font-size: 16px;
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .game-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .game-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+            border-color: rgba(0, 212, 255, 0.5);
+        }
+
+        .game-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .game-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #00d4ff;
+        }
+
+        .game-desc {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .play-btn {
+            background: linear-gradient(135deg, #00d4ff, #0099ff);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .play-btn:hover {
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.5);
+        }
+
+        .game-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .game-container {
+            background: rgba(20, 25, 45, 0.95);
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .close-btn {
+            float: right;
+            font-size: 28px;
+            cursor: pointer;
+            color: #00d4ff;
+            font-weight: 700;
+        }
+
+        .close-btn:hover {
+            color: #ff5252;
+        }
+
+        .game-area {
+            margin-top: 20px;
+        }
+
+        canvas {
+            border: 2px solid rgba(0, 212, 255, 0.5);
+            border-radius: 10px;
+            display: block;
+            margin: 0 auto;
+            background: #0a0e27;
+        }
+
+        .score-display {
+            text-align: center;
+            font-size: 24px;
+            font-weight: 600;
+            margin: 20px 0;
+            color: #00d4ff;
+        }
+
+        .game-controls {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .game-controls button {
+            background: linear-gradient(135deg, #00d4ff, #0099ff);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 0 10px;
+            font-size: 14px;
+        }
+
+        .quiz-option {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .quiz-option:hover {
+            background: rgba(0, 212, 255, 0.1);
+            border-color: #00d4ff;
+        }
+
+        .quiz-option.correct {
+            background: rgba(76, 175, 80, 0.2);
+            border-color: #4caf50;
+        }
+
+        .quiz-option.wrong {
+            background: rgba(255, 82, 82, 0.2);
+            border-color: #ff5252;
+        }
+
+        .xp-earned {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #00d4ff, #0099ff);
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-weight: 600;
+            display: none;
+            animation: slideIn 0.5s;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(400px); }
+            to { transform: translateX(0); }
+        }
+
+        @media (max-width: 768px) {
+            .games-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .game-container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">ARIA GAMES</div>
+        <div class="nav-links">
+            <a href="/">Dashboard</a>
+            <a href="/learning">Learning</a>
+            <a href="/profile">Profile</a>
+            <a href="/logout">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>🎮 Aviation Games & Challenges</h1>
+        <p class="subtitle">Test your skills and earn XP!</p>
+
+        <div class="games-grid">
+            <div class="game-card" onclick="openGame('flappy')">
+                <div class="game-icon">✈️</div>
+                <div class="game-title">Flappy Plane</div>
+                <div class="game-desc">Navigate your plane through obstacles! Classic arcade action with aviation theme.</div>
+                <button class="play-btn">Play Now</button>
+            </div>
+
+            <div class="game-card" onclick="openGame('quiz')">
+                <div class="game-icon">🧠</div>
+                <div class="game-title">Aviation Quiz</div>
+                <div class="game-desc">Test your aviation knowledge! Answer questions and earn big XP rewards.</div>
+                <button class="play-btn">Start Quiz</button>
+            </div>
+
+            <div class="game-card" onclick="openGame('reaction')">
+                <div class="game-icon">⚡</div>
+                <div class="game-title">Pilot Reflexes</div>
+                <div class="game-desc">How fast are your reflexes? Test your reaction time like a real pilot!</div>
+                <button class="play-btn">Test Reflexes</button>
+            </div>
+
+            <div class="game-card" onclick="openGame('memory')">
+                <div class="game-icon">🧩</div>
+                <div class="game-title">Aircraft Memory</div>
+                <div class="game-desc">Match aircraft pairs! Train your memory with different aircraft types.</div>
+                <button class="play-btn">Play Memory</button>
+            </div>
+
+            <div class="game-card" onclick="openGame('typing')">
+                <div class="game-icon">⌨️</div>
+                <div class="game-title">ATC Speed Typing</div>
+                <div class="game-desc">Type aviation codes fast! Improve your typing speed with ATC callsigns.</div>
+                <button class="play-btn">Start Typing</button>
+            </div>
+
+            <div class="game-card" onclick="openGame('snake')">
+                <div class="game-icon">🐍</div>
+                <div class="game-title">Sky Snake</div>
+                <div class="game-desc">Classic snake game in the sky! Collect fuel and avoid crashes.</div>
+                <button class="play-btn">Play Snake</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Modal -->
+    <div id="gameModal" class="game-modal">
+        <div class="game-container">
+            <span class="close-btn" onclick="closeGame()">&times;</span>
+            <h2 id="gameTitle" style="text-align: center; margin-bottom: 20px;">Game</h2>
+            <div class="score-display" id="scoreDisplay">Score: 0</div>
+            <div class="game-area" id="gameArea"></div>
+            <div class="game-controls" id="gameControls"></div>
+        </div>
+    </div>
+
+    <div class="xp-earned" id="xpEarned">+50 XP Earned! 🎉</div>
+
+    <script>
+        let currentGame = null;
+        let gameScore = 0;
+
+        function openGame(gameType) {
+            const modal = document.getElementById('gameModal');
+            const gameArea = document.getElementById('gameArea');
+            const gameTitle = document.getElementById('gameTitle');
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            const gameControls = document.getElementById('gameControls');
+            
+            modal.style.display = 'flex';
+            gameScore = 0;
+            scoreDisplay.textContent = 'Score: 0';
+            gameArea.innerHTML = '';
+            gameControls.innerHTML = '';
+            currentGame = gameType;
+            
+            switch(gameType) {
+                case 'flappy':
+                    gameTitle.textContent = '✈️ Flappy Plane';
+                    startFlappyGame();
+                    break;
+                case 'quiz':
+                    gameTitle.textContent = '🧠 Aviation Quiz';
+                    startQuizGame();
+                    break;
+                case 'reaction':
+                    gameTitle.textContent = '⚡ Pilot Reflexes';
+                    startReactionGame();
+                    break;
+                case 'memory':
+                    gameTitle.textContent = '🧩 Aircraft Memory';
+                    startMemoryGame();
+                    break;
+                case 'typing':
+                    gameTitle.textContent = '⌨️ ATC Speed Typing';
+                    startTypingGame();
+                    break;
+                case 'snake':
+                    gameTitle.textContent = '🐍 Sky Snake';
+                    startSnakeGame();
+                    break;
+            }
+        }
+
+        function closeGame() {
+            document.getElementById('gameModal').style.display = 'none';
+            if (gameScore > 0) {
+                saveScore(currentGame, gameScore);
+            }
+        }
+
+        function updateScore(points) {
+            gameScore += points;
+            document.getElementById('scoreDisplay').textContent = `Score: ${gameScore}`;
+        }
+
+        async function saveScore(gameName, score) {
+            try {
+                const response = await fetch('/api/games/score', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ game_name: gameName, score: score })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showXP(data.xp_earned);
+                }
+            } catch (error) {
+                console.error('Error saving score:', error);
+            }
+        }
+
+        function showXP(xp) {
+            const xpDiv = document.getElementById('xpEarned');
+            xpDiv.textContent = `+${xp} XP Earned! 🎉`;
+            xpDiv.style.display = 'block';
+            setTimeout(() => {
+                xpDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // FLAPPY PLANE GAME
+        function startFlappyGame() {
+            const gameArea = document.getElementById('gameArea');
+            gameArea.innerHTML = '<canvas id="flappyCanvas" width="600" height="400"></canvas>';
+            
+            const canvas = document.getElementById('flappyCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            let plane = { x: 50, y: 200, velocity: 0, size: 30 };
+            let obstacles = [];
+            let frameCount = 0;
+            let gameRunning = true;
+            
+            function gameLoop() {
+                if (!gameRunning) return;
+                
+                ctx.fillStyle = '#0a0e27';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Plane
+                plane.velocity += 0.5;
+                plane.y += plane.velocity;
+                
+                ctx.fillStyle = '#00d4ff';
+                ctx.fillRect(plane.x, plane.y, plane.size, plane.size);
+                
+                // Obstacles
+                if (frameCount % 90 === 0) {
+                    const gap = 150;
+                    const height = Math.random() * 200 + 50;
+                    obstacles.push({ x: canvas.width, top: height, gap: gap });
+                }
+                
+                obstacles.forEach((obs, index) => {
+                    obs.x -= 3;
+                    
+                    ctx.fillStyle = '#ff5252';
+                    ctx.fillRect(obs.x, 0, 50, obs.top);
+                    ctx.fillRect(obs.x, obs.top + obs.gap, 50, canvas.height);
+                    
+                    // Collision
+                    if (plane.x + plane.size > obs.x && plane.x < obs.x + 50) {
+                        if (plane.y < obs.top || plane.y + plane.size > obs.top + obs.gap) {
+                            gameRunning = false;
+                            alert(`Game Over! Score: ${gameScore}`);
+                            closeGame();
+                        }
+                    }
+                    
+                    // Score
+                    if (obs.x + 50 === plane.x) {
+                        updateScore(10);
+                    }
+                    
+                    if (obs.x < -50) obstacles.splice(index, 1);
+                });
+                
+                // Boundaries
+                if (plane.y < 0 || plane.y + plane.size > canvas.height) {
+                    gameRunning = false;
+                    alert(`Game Over! Score: ${gameScore}`);
+                    closeGame();
+                }
+                
+                frameCount++;
+                requestAnimationFrame(gameLoop);
+            }
+            
+            canvas.addEventListener('click', () => {
+                plane.velocity = -10;
+            });
+            
+            gameLoop();
+        }
+
+        // AVIATION QUIZ GAME
+        function startQuizGame() {
+            const questions = [
+                { q: "What does ATC stand for?", options: ["Air Traffic Control", "Aircraft Technical Control", "Aviation Transport Center", "Automatic Transfer Control"], correct: 0 },
+                { q: "What is the cruising altitude for commercial jets?", options: ["10,000-20,000 ft", "30,000-40,000 ft", "50,000-60,000 ft", "70,000+ ft"], correct: 1 },
+                { q: "Who invented the first successful airplane?", options: ["Leonardo da Vinci", "Wright Brothers", "Henry Ford", "Thomas Edison"], correct: 1 },
+                { q: "What does IFR stand for?", options: ["Instrument Flight Rules", "International Flight Regulations", "Internal Flight Records", "Immediate Flight Response"], correct: 0 },
+                { q: "What is the purpose of flaps on an aircraft?", options: ["Increase speed", "Increase lift at low speeds", "Reduce weight", "Control temperature"], correct: 1 }
+            ];
+            
+            let currentQ = 0;
+            const gameArea = document.getElementById('gameArea');
+            
+            function showQuestion() {
+                if (currentQ >= questions.length) {
+                    gameArea.innerHTML = `<h2 style="text-align:center; color:#00d4ff;">Quiz Complete! Final Score: ${gameScore}</h2>`;
+                    setTimeout(() => closeGame(), 2000);
+                    return;
+                }
+                
+                const q = questions[currentQ];
+                let html = `<h3 style="margin-bottom: 20px;">${q.q}</h3>`;
+                
+                q.options.forEach((opt, i) => {
+                    html += `<div class="quiz-option" onclick="checkAnswer(${i}, ${q.correct})">${opt}</div>`;
+                });
+                
+                gameArea.innerHTML = html;
+            }
+            
+            window.checkAnswer = function(selected, correct) {
+                const options = document.querySelectorAll('.quiz-option');
+                if (selected === correct) {
+                    options[selected].classList.add('correct');
+                    updateScore(20);
+                } else {
+                    options[selected].classList.add('wrong');
+                    options[correct].classList.add('correct');
+                }
+                
+                setTimeout(() => {
+                    currentQ++;
+                    showQuestion();
+                }, 1500);
+            };
+            
+            showQuestion();
+        }
+
+        // REACTION TIME GAME
+        function startReactionGame() {
+            const gameArea = document.getElementById('gameArea');
+            let startTime, reactionTimes = [];
+            
+            function newRound() {
+                gameArea.innerHTML = '<div style="text-align:center; padding: 100px; font-size: 20px;">Wait for green...</div>';
+                gameArea.style.background = '#ff5252';
+                
+                setTimeout(() => {
+                    gameArea.style.background = '#4caf50';
+                    gameArea.innerHTML = '<div style="text-align:center; padding: 100px; font-size: 24px; cursor: pointer;">CLICK NOW!</div>';
+                    startTime = Date.now();
+                    
+                    gameArea.onclick = () => {
+                        const reactionTime = Date.now() - startTime;
+                        reactionTimes.push(reactionTime);
+                        updateScore(Math.max(100 - reactionTime / 10, 10));
+                        
+                        if (reactionTimes.length < 5) {
+                            gameArea.innerHTML = `<div style="text-align:center; padding: 100px; font-size: 20px;">Reaction: ${reactionTime}ms<br>Round ${reactionTimes.length}/5</div>`;
+                            setTimeout(newRound, 2000);
+                        } else {
+                            const avg = reactionTimes.reduce((a,b) => a+b) / reactionTimes.length;
+                            gameArea.innerHTML = `<div style="text-align:center; padding: 100px; font-size: 20px;">Complete!<br>Average: ${avg.toFixed(0)}ms</div>`;
+                            gameArea.style.background = '';
+                            setTimeout(() => closeGame(), 3000);
+                        }
+                    };
+                }, Math.random() * 3000 + 1000);
+            }
+            
+            newRound();
+        }
+
+        // MEMORY GAME
+        function startMemoryGame() {
+            const gameArea = document.getElementById('gameArea');
+            const aircraft = ['✈️', '🚁', '🛩️', '🚀', '🛸', '🪂'];
+            const cards = [...aircraft, ...aircraft].sort(() => Math.random() - 0.5);
+            let flipped = [];
+            let matched = 0;
+            
+            let html = '<div style="display: grid; grid-template-columns: repeat(4, 100px); gap: 10px; justify-content: center;">';
+            cards.forEach((card, i) => {
+                html += `<div class="memory-card" data-index="${i}" style="width:100px; height:100px; background:rgba(255,255,255,0.1); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:40px; cursor:pointer; border: 2px solid rgba(255,255,255,0.2);" onclick="flipCard(${i})">?</div>`;
+            });
+            html += '</div>';
+            gameArea.innerHTML = html;
+            
+            window.flipCard = function(index) {
+                if (flipped.length === 2) return;
+                const card = document.querySelectorAll('.memory-card')[index];
+                if (card.textContent !== '?') return;
+                
+                card.textContent = cards[index];
+                flipped.push(index);
+                
+                if (flipped.length === 2) {
+                    if (cards[flipped[0]] === cards[flipped[1]]) {
+                        matched += 2;
+                        updateScore(20);
+                        flipped = [];
+                        if (matched === cards.length) {
+                            setTimeout(() => {
+                                alert('You Won!');
+                                closeGame();
+                            }, 500);
+                        }
+                    } else {
+                        setTimeout(() => {
+                            document.querySelectorAll('.memory-card')[flipped[0]].textContent = '?';
+                            document.querySelectorAll('.memory-card')[flipped[1]].textContent = '?';
+                            flipped = [];
+                        }, 1000);
+                    }
+                }
+            };
+        }
+
+        // TYPING GAME
+        function startTypingGame() {
+            const gameArea = document.getElementById('gameArea');
+            const words = ['ALPHA', 'BRAVO', 'CHARLIE', 'DELTA', 'ECHO', 'FOXTROT', 'GOLF', 'HOTEL'];
+            let currentWord = '';
+            let wordsTyped = 0;
+            
+            function newWord() {
+                currentWord = words[Math.floor(Math.random() * words.length)];
+                gameArea.innerHTML = `
+                    <div style="text-align:center; padding: 50px;">
+                        <h2 style="font-size:48px; color:#00d4ff; margin-bottom:30px;">${currentWord}</h2>
+                        <input type="text" id="typeInput" style="padding:15px; font-size:24px; width:300px; text-align:center; background:rgba(255,255,255,0.1); border:2px solid #00d4ff; border-radius:10px; color:white;" autofocus>
+                        <div style="margin-top:20px; font-size:18px;">Words: ${wordsTyped}/10</div>
+                    </div>
+                `;
+                
+                document.getElementById('typeInput').addEventListener('input', (e) => {
+                    if (e.target.value.toUpperCase() === currentWord) {
+                        wordsTyped++;
+                        updateScore(15);
+                        if (wordsTyped < 10) {
+                            newWord();
+                        } else {
+                            gameArea.innerHTML = '<div style="text-align:center; padding:100px; font-size:24px;">Complete! Well done!</div>';
+                            setTimeout(() => closeGame(), 2000);
+                        }
+                    }
+                });
+            }
+            
+            newWord();
+        }
+
+        // SNAKE GAME
+        function startSnakeGame() {
+            const gameArea = document.getElementById('gameArea');
+            gameArea.innerHTML = '<canvas id="snakeCanvas" width="600" height="400"></canvas>';
+            
+            const canvas = document.getElementById('snakeCanvas');
+            const ctx = canvas.getContext('2d');
+            const box = 20;
+            
+            let snake = [{ x: 10 * box, y: 10 * box }];
+            let direction = 'RIGHT';
+            let food = { x: Math.floor(Math.random() * 29) * box, y: Math.floor(Math.random() * 19) * box };
+            let gameRunning = true;
+            
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowUp' && direction !== 'DOWN') direction = 'UP';
+                if (e.key === 'ArrowDown' && direction !== 'UP') direction = 'DOWN';
+                if (e.key === 'ArrowLeft' && direction !== 'RIGHT') direction = 'LEFT';
+                if (e.key === 'ArrowRight' && direction !== 'LEFT') direction = 'RIGHT';
+            });
+            
+            function gameLoop() {
+                if (!gameRunning) return;
+                
+                ctx.fillStyle = '#0a0e27';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Snake
+                for (let i = 0; i < snake.length; i++) {
+                    ctx.fillStyle = i === 0 ? '#00d4ff' : 'rgba(0, 212, 255, 0.5)';
+                    ctx.fillRect(snake[i].x, snake[i].y, box, box);
+                }
+                
+                // Food
+                ctx.fillStyle = '#ff5252';
+                ctx.fillRect(food.x, food.y, box, box);
+                
+                // Move
+                let newX = snake[0].x;
+                let newY = snake[0].y;
+                
+                if (direction === 'UP') newY -= box;
+                if (direction === 'DOWN') newY += box;
+                if (direction === 'LEFT') newX -= box;
+                if (direction === 'RIGHT') newX += box;
+                
+                // Eat food
+                if (newX === food.x && newY === food.y) {
+                    updateScore(10);
+                    food = { x: Math.floor(Math.random() * 29) * box, y: Math.floor(Math.random() * 19) * box };
+                } else {
+                    snake.pop();
+                }
+                
+                const newHead = { x: newX, y: newY };
+                
+                // Collision
+                if (newX < 0 || newY < 0 || newX >= canvas.width || newY >= canvas.height || 
+                    snake.some(seg => seg.x === newX && seg.y === newY)) {
+                    gameRunning = false;
+                    alert(`Game Over! Score: ${gameScore}`);
+                    closeGame();
+                    return;
+                }
+                
+                snake.unshift(newHead);
+                setTimeout(gameLoop, 100);
+            }
+            
+            gameLoop();
+        }
+    </script>
+</body>
+</html>
