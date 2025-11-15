@@ -105,10 +105,72 @@ with app.app_context():
 @login_required
 def index():
     try:
+        # Check if template exists
+        import os
+        template_path = os.path.join(app.root_path, 'templates', 'index.html')
+        if not os.path.exists(template_path):
+            # Use a simple fallback
+            return '''
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Aria AI Dashboard</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        max-width: 800px;
+                        margin: 50px auto;
+                        padding: 20px;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                    }
+                    .container {
+                        background: rgba(255,255,255,0.1);
+                        padding: 40px;
+                        border-radius: 20px;
+                        backdrop-filter: blur(10px);
+                    }
+                    h1 { margin-bottom: 20px; }
+                    .links a {
+                        display: inline-block;
+                        margin: 10px;
+                        padding: 12px 24px;
+                        background: white;
+                        color: #667eea;
+                        text-decoration: none;
+                        border-radius: 8px;
+                        font-weight: bold;
+                    }
+                    .links a:hover { transform: translateY(-2px); }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>✈️ Welcome to Aria AI Aviation Platform</h1>
+                    <p>Hello, ''' + current_user.username + '''!</p>
+                    <p>Dashboard is being configured. Available features:</p>
+                    <div class="links">
+                        <a href="/learning">📚 Learning Module</a>
+                        <a href="/profile">👤 Profile</a>
+                        <a href="/history">📜 Chat History</a>
+                        <a href="/logout">🚪 Logout</a>
+                    </div>
+                </div>
+            </body>
+            </html>
+            '''
         return render_template('index.html')
     except Exception as e:
-        print(f"❌ Index error: {e}")
-        return jsonify({'error': 'Dashboard template not found'}), 500
+        app.logger.error(f"Dashboard error: {e}")
+        return f'''
+        <html>
+        <body style="font-family: Arial; padding: 50px; text-align: center;">
+            <h1>⚠️ Error Loading Dashboard</h1>
+            <p>Error: {str(e)}</p>
+            <p><a href="/logout">Logout</a></p>
+        </body>
+        </html>
+        ''', 500
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -210,12 +272,12 @@ def chat():
         current_user.messages_today += 1
         current_user.xp += 10
         current_user.last_active = datetime.utcnow()
-
+        
         # Level up logic
         xp_needed = current_user.level * 100
-        while current_user.xp >= xp_needed:
-            current_user.xp -= xp_needed
+        if current_user.xp >= xp_needed:
             current_user.level += 1
+            current_user.xp = 0
         
         db.session.commit()
         
@@ -272,10 +334,41 @@ def voice_chat():
 def learning():
     return render_template('learning.html')
 
+@app.route('/settings')
+@login_required
+def settings():
+    return render_template('settings.html')
+
+@app.route('/games')
+@login_required
+def games():
+    return render_template('games.html')
+
 @app.route('/profile')
 @login_required
 def profile():
     return render_template('profile.html')
+
+@app.route('/api/profile')
+@login_required
+def get_profile():
+    return jsonify({
+        'success': True,
+        'user': {
+            'username': current_user.username,
+            'email': current_user.email,
+            'level': current_user.level,
+            'xp': current_user.xp,
+            'streak': current_user.streak,
+            'messages_count': current_user.messages_count,
+            'messages_today': current_user.messages_today,
+            'is_premium': current_user.is_premium,
+            'is_admin': current_user.is_admin,
+            'experience': current_user.experience,
+            'interest': current_user.interest,
+            'created_at': current_user.created_at.isoformat()
+        }
+    })
 
 @app.route('/admin')
 @login_required
