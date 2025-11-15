@@ -24,7 +24,7 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
 # Initialize extensions
 db = SQLAlchemy(app)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -94,13 +94,21 @@ def load_user(user_id):
 
 # Create database tables
 with app.app_context():
-    db.create_all()
+    try:
+        db.create_all()
+        print("✅ Database tables created successfully")
+    except Exception as e:
+        print(f"❌ Database error: {e}")
 
 # Routes
 @app.route('/')
 @login_required
 def index():
-    return render_template('index.html')
+    try:
+        return render_template('index.html')
+    except Exception as e:
+        print(f"❌ Index error: {e}")
+        return jsonify({'error': 'Dashboard template not found'}), 500
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -202,12 +210,13 @@ def chat():
         current_user.messages_today += 1
         current_user.xp += 10
         current_user.last_active = datetime.utcnow()
-        
+
         # Level up logic
         xp_needed = current_user.level * 100
-        if current_user.xp >= xp_needed:
+        while current_user.xp >= xp_needed:
+            current_user.xp -= xp_needed
             current_user.level += 1
-            current_user.xp = 0
+            xp_needed = current_user.level * 100
         
         db.session.commit()
         
@@ -295,7 +304,12 @@ def not_found(e):
 
 @app.errorhandler(500)
 def internal_error(e):
-    return jsonify({'error': 'Internal server error'}), 500
+    print(f"❌ 500 Error: {e}")
+    return jsonify({
+        'error': 'Internal server error',
+        'details': str(e),
+        'suggestion': 'Check logs for details'
+    }), 500
 
 # Production server configuration
 if __name__ == '__main__':

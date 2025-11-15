@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aria Aviation - Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <title>Aria AI - Creative Assistant</title>
     <style>
         * {
             margin: 0;
@@ -14,266 +12,312 @@
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-attachment: fixed;
+            height: 100vh;
             overflow: hidden;
-            background: #0a0e27;
         }
 
-        /* Aviation Background */
-        .main-background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
-                linear-gradient(rgba(10, 14, 39, 0.75), rgba(10, 14, 39, 0.85)),
-                url("{{ url_for('static', filename='images/airplane-sunset.jpg') }}") center/cover no-repeat fixed;
-            z-index: 0;
+        .app-wrapper {
+            display: flex;
+            height: 100vh;
+            padding: 20px;
+            gap: 20px;
         }
 
-        /* Left Sidebar */
+        /* Left Sidebar - Canva Style */
         .sidebar {
-            position: fixed;
-            left: -280px;
-            top: 0;
             width: 280px;
-            height: 100vh;
-            background: rgba(15, 20, 35, 0.95);
-            backdrop-filter: blur(20px);
-            border-right: 1px solid rgba(0, 191, 255, 0.2);
-            transition: left 0.3s ease;
-            z-index: 1000;
-            overflow-y: auto;
-        }
-
-        .sidebar.open {
-            left: 0;
-        }
-
-        .sidebar-header {
-            padding: 25px 20px;
-            border-bottom: 1px solid rgba(0, 191, 255, 0.15);
-        }
-
-        .sidebar-logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 15px;
-        }
-
-        .sidebar-logo h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 28px;
-            color: #00bcd4;
-            font-weight: 900;
-        }
-
-        .sidebar-subtitle {
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 11px;
-            letter-spacing: 1px;
-        }
-
-        .sidebar-menu {
-            padding: 20px 0;
-        }
-
-        .menu-section {
-            margin-bottom: 25px;
-        }
-
-        .menu-title {
-            padding: 0 20px 10px;
-            font-size: 10px;
-            font-weight: 700;
-            color: rgba(255, 255, 255, 0.4);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .menu-item {
-            padding: 12px 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: rgba(255, 255, 255, 0.7);
-            text-decoration: none;
-            transition: all 0.3s;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .menu-item:hover, .menu-item.active {
-            background: rgba(0, 191, 255, 0.1);
-            color: #00bcd4;
-            border-left: 3px solid #00bcd4;
-        }
-
-        .menu-icon {
-            font-size: 20px;
-            width: 24px;
-            text-align: center;
-        }
-
-        /* Toggle Button */
-        .sidebar-toggle {
-            position: fixed;
-            left: 20px;
-            top: 20px;
-            width: 45px;
-            height: 45px;
-            background: rgba(0, 191, 255, 0.2);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 191, 255, 0.3);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 1001;
-            transition: all 0.3s;
-        }
-
-        .sidebar-toggle:hover {
-            background: rgba(0, 191, 255, 0.3);
-            transform: scale(1.1);
-        }
-
-        .sidebar-toggle.active {
-            left: 300px;
-        }
-
-        /* Main Content */
-        .main-content {
-            margin-left: 0;
-            transition: margin-left 0.3s ease;
-            height: 100vh;
-            position: relative;
-            z-index: 1;
-        }
-
-        .main-content.shifted {
-            margin-left: 280px;
-        }
-
-        /* Top Bar */
-        .top-bar {
-            position: absolute;
-            top: 0;
-            right: 0;
-            padding: 20px 30px;
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            z-index: 100;
-        }
-
-        .stat-badge {
-            background: rgba(0, 191, 255, 0.15);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 191, 255, 0.2);
-            padding: 8px 16px;
+            background: white;
             border-radius: 20px;
-            color: #00bcd4;
-            font-size: 13px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .upgrade-btn {
-            background: linear-gradient(135deg, #f093fb, #f5576c);
-            border: none;
-            padding: 10px 20px;
-            border-radius: 20px;
-            color: white;
-            font-weight: 700;
-            cursor: pointer;
-            font-size: 13px;
-            box-shadow: 0 5px 20px rgba(245, 87, 108, 0.4);
-        }
-
-        /* Chat Area */
-        .chat-container {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 90%;
-            max-width: 900px;
-            height: 80vh;
-            background: rgba(15, 20, 35, 0.85);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            border: 1px solid rgba(0, 191, 255, 0.2);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
         }
 
-        .chat-header {
-            padding: 20px 25px;
-            border-bottom: 1px solid rgba(0, 191, 255, 0.15);
+        .sidebar-header {
+            padding: 30px 24px 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .logo-text h1 {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .logo-text p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            opacity: 0.9;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .menu-section {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            padding: 0 8px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: #333;
+            margin-bottom: 6px;
+        }
+
+        .menu-item:hover {
+            background: #f0f0f0;
+            transform: translateX(4px);
+        }
+
+        .menu-item.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .menu-icon {
+            width: 40px;
+            height: 40px;
+            background: #f8f8f8;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .menu-item.active .menu-icon {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .menu-label {
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .upgrade-box {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            padding: 20px;
+            border-radius: 16px;
+            color: white;
+            text-align: center;
+            margin-top: auto;
+        }
+
+        .upgrade-box h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .upgrade-box p {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 12px;
+        }
+
+        .upgrade-btn {
+            background: white;
+            color: #f5576c;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+        }
+
+        .upgrade-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+
+        .top-bar {
+            padding: 20px 30px;
+            background: white;
+            border-bottom: 2px solid #f0f0f0;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .chat-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 20px;
-            color: #00bcd4;
+        .page-title {
+            font-size: 24px;
             font-weight: 700;
+            color: #333;
         }
 
-        .chat-actions {
+        .top-actions {
             display: flex;
-            gap: 10px;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .timer-display {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .action-btn {
-            width: 40px;
-            height: 40px;
-            background: rgba(0, 191, 255, 0.1);
-            border: 1px solid rgba(0, 191, 255, 0.2);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            width: 44px;
+            height: 44px;
+            background: #f8f8f8;
+            border: none;
+            border-radius: 12px;
+            font-size: 20px;
             cursor: pointer;
-            color: #00bcd4;
-            font-size: 18px;
-            transition: all 0.3s;
+            transition: all 0.2s;
         }
 
         .action-btn:hover {
-            background: rgba(0, 191, 255, 0.2);
-            transform: scale(1.1);
+            background: #e8e8e8;
+            transform: scale(1.05);
         }
 
-        .chat-messages {
-            flex: 1;
-            padding: 25px;
-            overflow-y: auto;
+        .categories {
+            padding: 16px 30px;
+            background: #fafafa;
             display: flex;
-            flex-direction: column;
-            gap: 15px;
+            gap: 12px;
+            overflow-x: auto;
+        }
+
+        .category-pill {
+            padding: 10px 24px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            color: #666;
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+
+        .category-pill:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .category-pill.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .chat-area {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            background: linear-gradient(to bottom, #fafafa 0%, white 100%);
+        }
+
+        .messages-container {
+            max-width: 900px;
+            margin: 0 auto;
         }
 
         .message {
             display: flex;
-            gap: 12px;
+            gap: 16px;
+            margin-bottom: 24px;
             animation: slideIn 0.3s ease;
         }
 
         @keyframes slideIn {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: translateY(10px);
             }
             to {
                 opacity: 1;
@@ -285,448 +329,352 @@
             flex-direction: row-reverse;
         }
 
-        .message-avatar {
-            width: 40px;
-            height: 40px;
+        .msg-avatar {
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #00bcd4, #0099ff);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 22px;
             flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
-        .message-content {
+        .message.ai .msg-avatar {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .message.user .msg-avatar {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+
+        .msg-bubble {
             max-width: 70%;
-            padding: 15px 18px;
-            border-radius: 15px;
-            background: rgba(0, 191, 255, 0.1);
-            border: 1px solid rgba(0, 191, 255, 0.2);
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 14px;
-            line-height: 1.6;
-        }
-
-        .message.user .message-content {
-            background: linear-gradient(135deg, #0099ff, #00bcd4);
-            border: none;
-            color: white;
-        }
-
-        .chat-input-area {
-            padding: 20px 25px;
-            border-top: 1px solid rgba(0, 191, 255, 0.15);
-        }
-
-        .input-tools {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 12px;
-        }
-
-        .tool-btn {
-            padding: 8px 16px;
-            background: rgba(0, 191, 255, 0.1);
-            border: 1px solid rgba(0, 191, 255, 0.2);
+            padding: 16px 20px;
             border-radius: 20px;
-            color: #00bcd4;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
+            line-height: 1.6;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .message.ai .msg-bubble {
+            background: white;
+            color: #333;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message.user .msg-bubble {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 16px 20px;
+            background: white;
+            border-radius: 20px;
+            border-bottom-left-radius: 4px;
+            width: fit-content;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .typing-dots {
             display: flex;
-            align-items: center;
             gap: 6px;
         }
 
-        .tool-btn:hover {
-            background: rgba(0, 191, 255, 0.2);
+        .typing-dots span {
+            width: 10px;
+            height: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite;
         }
 
-        .input-box {
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-8px); }
+        }
+
+        .input-section {
+            padding: 20px 30px;
+            background: white;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .input-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
             display: flex;
             gap: 12px;
-        }
-
-        #messageInput {
-            flex: 1;
-            padding: 14px 18px;
-            background: rgba(10, 15, 25, 0.6);
-            border: 1.5px solid rgba(0, 191, 255, 0.2);
-            border-radius: 25px;
-            color: white;
-            font-size: 14px;
-            outline: none;
-        }
-
-        #messageInput::placeholder {
-            color: rgba(255, 255, 255, 0.3);
-        }
-
-        #sendBtn {
-            padding: 14px 28px;
-            background: linear-gradient(135deg, #0099ff, #00bcd4);
-            border: none;
-            border-radius: 25px;
-            color: white;
-            font-weight: 700;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-
-        #sendBtn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0, 153, 255, 0.4);
-        }
-
-        /* Screenshot Modal */
-        .screenshot-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 2000;
-            justify-content: center;
             align-items: center;
         }
 
-        .screenshot-content {
-            background: rgba(15, 20, 35, 0.95);
-            padding: 30px;
-            border-radius: 20px;
-            max-width: 600px;
-            width: 90%;
-            border: 1px solid rgba(0, 191, 255, 0.3);
+        .msg-input {
+            flex: 1;
+            padding: 16px 24px;
+            border: 2px solid #e0e0e0;
+            border-radius: 50px;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s;
         }
 
-        .screenshot-preview {
-            width: 100%;
-            max-height: 300px;
-            object-fit: contain;
-            border-radius: 10px;
-            margin-bottom: 20px;
+        .msg-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
         }
 
-        .analysis-text {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 14px;
-            line-height: 1.6;
-            margin-bottom: 20px;
+        .send-btn {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .send-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.6);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         @media (max-width: 768px) {
+            .app-wrapper {
+                padding: 0;
+                gap: 0;
+            }
+
             .sidebar {
-                width: 250px;
-                left: -250px;
+                position: fixed;
+                left: -280px;
+                z-index: 1000;
+                height: 100vh;
+                border-radius: 0;
+                transition: left 0.3s;
             }
 
-            .sidebar-toggle.active {
-                left: 270px;
+            .sidebar.open {
+                left: 0;
             }
 
-            .main-content.shifted {
-                margin-left: 0;
-            }
-
-            .top-bar {
-                padding: 15px;
-                flex-wrap: wrap;
-            }
-
-            .chat-container {
-                width: 95%;
-                height: 85vh;
+            .main-content {
+                border-radius: 0;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Background -->
-    <div class="main-background"></div>
-
-    <!-- Sidebar Toggle -->
-    <div class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">
-        ☰
-    </div>
-
-    <!-- Left Sidebar -->
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="sidebar-logo">
-                <span style="font-size: 30px;">✈️</span>
-                <h1>ARIA</h1>
-            </div>
-            <div class="sidebar-subtitle">Aviation Intelligence Platform</div>
-        </div>
-
-        <div class="sidebar-menu">
-            <div class="menu-section">
-                <div class="menu-title">Main</div>
-                <a href="/" class="menu-item active">
-                    <span class="menu-icon">💬</span>
-                    <span>Chat Assistant</span>
-                </a>
-                <div class="menu-item" onclick="openScreenshotTool()">
-                    <span class="menu-icon">📸</span>
-                    <span>Screenshot Analysis</span>
+    <div class="app-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">✨</div>
+                    <div class="logo-text">
+                        <h1>Aria AI</h1>
+                        <p>Creative Assistant</p>
+                    </div>
                 </div>
-                <a href="/aircraft-diagrams" class="menu-item">
-                    <span class="menu-icon">✈️</span>
-                    <span>Aircraft Diagrams</span>
-                </a>
-                <a href="/learning-modules" class="menu-item">
-                    <span class="menu-icon">📚</span>
-                    <span>Learning Modules</span>
-                </a>
-            </div>
 
-            <div class="menu-section">
-                <div class="menu-title">Tools</div>
-                <div class="menu-item">
-                    <span class="menu-icon">🎤</span>
-                    <span>Voice Assistant</span>
-                </div>
-                <div class="menu-item">
-                    <span class="menu-icon">📄</span>
-                    <span>PDF Analyzer</span>
-                </div>
-                <div class="menu-item">
-                    <span class="menu-icon">🎥</span>
-                    <span>Video Generator</span>
-                </div>
-                <div class="menu-item">
-                    <span class="menu-icon">📊</span>
-                    <span>Progress Charts</span>
-                </div>
-            </div>
-
-            <div class="menu-section">
-                <div class="menu-title">Account</div>
-                <a href="/profile" class="menu-item">
-                    <span class="menu-icon">👤</span>
-                    <span>Profile</span>
-                </a>
-                <a href="/history" class="menu-item">
-                    <span class="menu-icon">📜</span>
-                    <span>History</span>
-                </a>
-                {% if is_admin %}
-                <a href="/admin" class="menu-item">
-                    <span class="menu-icon">⚙️</span>
-                    <span>Admin Panel</span>
-                </a>
-                {% endif %}
-                <a href="/logout" class="menu-item">
-                    <span class="menu-icon">🚪</span>
-                    <span>Logout</span>
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="main-content" id="mainContent">
-        <!-- Top Bar -->
-        <div class="top-bar">
-            <div class="stat-badge">
-                🎮 Level {{ user.level }}
-            </div>
-            <div class="stat-badge">
-                ⭐ {{ user.xp }} XP
-            </div>
-            <div class="stat-badge">
-                🔥 {{ user.streak_days }} days
-            </div>
-            <div class="stat-badge">
-                ⏱️ {{ time_remaining }}
-            </div>
-            {% if not user.is_premium %}
-            <button class="upgrade-btn" onclick="upgradePremium()">
-                ⭐ Upgrade - ₹{{ user.premium_price }}
-            </button>
-            {% endif %}
-        </div>
-
-        <!-- Chat Container -->
-        <div class="chat-container">
-            <div class="chat-header">
-                <div class="chat-title">✈️ Aviation Assistant</div>
-                <div class="chat-actions">
-                    <div class="action-btn" title="Voice Input">🎤</div>
-                    <div class="action-btn" title="Screenshot" onclick="openScreenshotTool()">📸</div>
-                    <div class="action-btn" title="Upload PDF">📄</div>
-                </div>
-            </div>
-
-            <div class="chat-messages" id="chatMessages">
-                <div class="message">
-                    <div class="message-avatar">🤖</div>
-                    <div class="message-content">
-                        Welcome aboard, <strong>{{ user.username }}</strong>! I'm Aria, your aviation intelligence assistant. How can I help you today?
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">🎮</div>
+                        <div class="stat-value" id="lvl">1</div>
+                        <div class="stat-label">Level</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⭐</div>
+                        <div class="stat-value" id="xp">0</div>
+                        <div class="stat-label">XP</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🔥</div>
+                        <div class="stat-value" id="streak">0</div>
+                        <div class="stat-label">Streak</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💬</div>
+                        <div class="stat-value" id="msgs">0</div>
+                        <div class="stat-label">Chats</div>
                     </div>
                 </div>
             </div>
 
-            <div class="chat-input-area">
-                <div class="input-tools">
-                    <div class="tool-btn">📸 Screenshot</div>
-                    <div class="tool-btn">📄 Upload PDF</div>
-                    <div class="tool-btn">🎤 Voice</div>
-                    <div class="tool-btn">✈️ Diagrams</div>
+            <div class="sidebar-content">
+                <div class="menu-section">
+                    <div class="section-title">Main</div>
+                    <a href="#" class="menu-item active">
+                        <div class="menu-icon">💬</div>
+                        <div class="menu-label">Chat</div>
+                    </a>
+                    <a href="/learning" class="menu-item">
+                        <div class="menu-icon">📚</div>
+                        <div class="menu-label">Learning</div>
+                    </a>
+                    <a href="/history" class="menu-item">
+                        <div class="menu-icon">📜</div>
+                        <div class="menu-label">History</div>
+                    </a>
                 </div>
-                <div class="input-box">
-                    <input type="text" id="messageInput" placeholder="Ask me anything about aviation..." 
-                           onkeypress="if(event.key==='Enter') sendMessage()">
-                    <button id="sendBtn" onclick="sendMessage()">Send ✈️</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Screenshot Modal -->
-    <div class="screenshot-modal" id="screenshotModal">
-        <div class="screenshot-content">
-            <h3 style="color: #00bcd4; margin-bottom: 15px;">📸 Screenshot Analysis</h3>
-            <canvas id="screenshotCanvas" style="display: none;"></canvas>
-            <img id="screenshotPreview" class="screenshot-preview" style="display: none;">
-            <div class="analysis-text" id="analysisText">Analyzing...</div>
-            <div style="display: flex; gap: 10px;">
-                <button onclick="captureScreen()" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #0099ff, #00bcd4); border: none; border-radius: 8px; color: white; font-weight: 700; cursor: pointer;">
-                    Capture Screen
-                </button>
-                <button onclick="closeScreenshotModal()" style="flex: 1; padding: 12px; background: rgba(255, 50, 50, 0.2); border: 1px solid rgba(255, 50, 50, 0.5); border-radius: 8px; color: #ff6b6b; font-weight: 700; cursor: pointer;">
-                    Close
-                </button>
+                <div class="menu-section">
+                    <div class="section-title">Account</div>
+                    <a href="/profile" class="menu-item">
+                        <div class="menu-icon">👤</div>
+                        <div class="menu-label">Profile</div>
+                    </a>
+                    <a href="#" class="menu-item">
+                        <div class="menu-icon">⚙️</div>
+                        <div class="menu-label">Settings</div>
+                    </a>
+                    <a href="/logout" class="menu-item">
+                        <div class="menu-icon">🚪</div>
+                        <div class="menu-label">Logout</div>
+                    </a>
+                </div>
+
+                <div class="upgrade-box">
+                    <h3>⭐ Go Premium</h3>
+                    <p>Unlimited chats & features</p>
+                    <button class="upgrade-btn">Upgrade - ₹89/mo</button>
+                </div>
             </div>
-        </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="top-bar">
+                <h1 class="page-title">AI Assistant</h1>
+                <div class="top-actions">
+                    <div class="timer-display">
+                        <span>⏱️</span>
+                        <span id="time">20:00</span>
+                    </div>
+                    <button class="action-btn" onclick="location.href='/profile'">👤</button>
+                </div>
+            </div>
+
+            <div class="categories">
+                <button class="category-pill active" onclick="selCat(this, 'general')">🌐 General</button>
+                <button class="category-pill" onclick="selCat(this, 'aviation')">✈️ Aviation</button>
+                <button class="category-pill" onclick="selCat(this, 'career')">💼 Career</button>
+                <button class="category-pill" onclick="selCat(this, 'study')">📚 Study</button>
+            </div>
+
+            <div class="chat-area">
+                <div class="messages-container" id="msgs">
+                    <div class="message ai">
+                        <div class="msg-avatar">🤖</div>
+                        <div class="msg-bubble">
+                            Hey there! 👋 I'm Aria, your creative AI assistant. Let's create something amazing together!
+                        </div>
+                    </div>
+                    <div class="typing-indicator" id="typing">
+                        <div class="typing-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-section">
+                <div class="input-wrapper">
+                    <input type="text" class="msg-input" id="inp" 
+                           placeholder="What's on your mind?" 
+                           onkeypress="if(event.key==='Enter')send()">
+                    <button class="send-btn" id="btn" onclick="send()">▶</button>
+                </div>
+            </div>
+        </main>
     </div>
 
     <script>
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const mainContent = document.getElementById('mainContent');
-            const toggle = document.getElementById('sidebarToggle');
-            
-            sidebar.classList.toggle('open');
-            mainContent.classList.toggle('shifted');
-            toggle.classList.toggle('active');
+        let t = 1200, cat = 'general', cnt = 0;
+
+        setInterval(() => {
+            if (t > 0) {
+                t--;
+                const m = Math.floor(t/60), s = t%60;
+                document.getElementById('time').textContent = 
+                    `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            }
+        }, 1000);
+
+        function selCat(el, c) {
+            cat = c;
+            document.querySelectorAll('.category-pill').forEach(p => p.classList.remove('active'));
+            el.classList.add('active');
         }
 
-        function addMessage(text, isUser) {
-            const chatMessages = document.getElementById('chatMessages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isUser ? 'user' : ''}`;
-            
-            messageDiv.innerHTML = `
-                <div class="message-avatar">${isUser ? '👤' : '🤖'}</div>
-                <div class="message-content">${text}</div>
+        function add(txt, usr) {
+            const d = document.createElement('div');
+            d.className = `message ${usr ? 'user' : 'ai'}`;
+            d.innerHTML = `
+                <div class="msg-avatar">${usr ? '👤' : '🤖'}</div>
+                <div class="msg-bubble">${txt}</div>
             `;
-            
-            chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            document.getElementById('msgs').insertBefore(d, document.getElementById('typing'));
+            document.querySelector('.chat-area').scrollTop = 999999;
         }
 
-        async function sendMessage() {
-            const input = document.getElementById('messageInput');
-            const message = input.value.trim();
-            
-            if (!message) return;
-            
-            addMessage(message, true);
-            input.value = '';
-            
-            document.getElementById('sendBtn').disabled = true;
-            
+        async function send() {
+            const inp = document.getElementById('inp');
+            const msg = inp.value.trim();
+            if (!msg) return;
+
+            add(msg, true);
+            inp.value = '';
+            cnt++;
+            document.getElementById('msgs').textContent = cnt;
+
+            document.getElementById('typing').style.display = 'block';
+            document.getElementById('btn').disabled = true;
+
             try {
                 const res = await fetch('/chat', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message })
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message: msg, category: cat})
                 });
-                
                 const data = await res.json();
-                
-                if (data.error) {
-                    addMessage(data.error, false);
+
+                document.getElementById('typing').style.display = 'none';
+                document.getElementById('btn').disabled = false;
+
+                if (data.success) {
+                    add(data.response, false);
+                    if (data.xp) document.getElementById('xp').textContent = data.xp;
+                    if (data.level) document.getElementById('lvl').textContent = data.level;
                 } else {
-                    addMessage(data.response, false);
+                    add(data.error || 'Error!', false);
                 }
-            } catch (err) {
-                addMessage('Connection error. Please try again.', false);
-            } finally {
-                document.getElementById('sendBtn').disabled = false;
+            } catch (e) {
+                document.getElementById('typing').style.display = 'none';
+                document.getElementById('btn').disabled = false;
+                add('Connection error!', false);
             }
         }
 
-        function openScreenshotTool() {
-            document.getElementById('screenshotModal').style.display = 'flex';
-        }
-
-        function closeScreenshotModal() {
-            document.getElementById('screenshotModal').style.display = 'none';
-        }
-
-        async function captureScreen() {
-            try {
-                const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-                const video = document.createElement('video');
-                video.srcObject = stream;
-                video.play();
-                
-                video.onloadedmetadata = async () => {
-                    const canvas = document.getElementById('screenshotCanvas');
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(video, 0, 0);
-                    
-                    stream.getTracks().forEach(track => track.stop());
-                    
-                    const imageData = canvas.toDataURL('image/png');
-                    document.getElementById('screenshotPreview').src = imageData;
-                    document.getElementById('screenshotPreview').style.display = 'block';
-                    
-                    // Analyze
-                    const res = await fetch('/analyze-screenshot', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ image: imageData })
-                    });
-                    
-                    const data = await res.json();
-                    document.getElementById('analysisText').textContent = data.analysis;
-                };
-            } catch (err) {
-                alert('Screenshot capture failed: ' + err.message);
-            }
-        }
-
-        function upgradePremium() {
-            fetch('/create-order', { method: 'POST' })
-                .then(res => res.json())
-                .then(data => {
-                    const rzp = new Razorpay({
-                        key: data.key,
-                        amount: data.amount,
-                        currency: 'INR',
-                        name: 'Aria Aviation Premium',
-                        order_id: data.order_id,
-                        handler: function(response) {
-                            fetch('/payment-success', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(response)
-                            }).then(() => location.reload());
-                        }
-                    });
-                    rzp.open();
-                });
-        }
+        document.getElementById('inp').focus();
     </script>
 </body>
 </html>
