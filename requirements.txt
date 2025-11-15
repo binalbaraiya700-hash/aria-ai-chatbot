@@ -1,51 +1,14 @@
-# Core Flask
 Flask==3.0.0
 Flask-CORS==4.0.0
 Flask-Login==0.6.3
 Flask-SQLAlchemy==3.1.1
 Werkzeug==3.0.1
-
-# AI & ML
 google-generativeai==0.3.2
-openai==1.12.0
-anthropic==0.18.1
-
-# Image Processing
-Pillow==10.2.0
-opencv-python==4.9.0.80
-pytesseract==0.3.10
-
-# PDF Processing
-PyPDF2==3.0.1
-pdfplumber==0.10.3
-
-# Audio/Video
-moviepy==1.0.3
-pydub==0.25.1
-SpeechRecognition==3.10.1
-gTTS==2.5.0
-
-# Data & Charts
-pandas==2.1.4
-matplotlib==3.8.2
-plotly==5.18.0
-
-# Web Scraping (for aviation data)
-beautifulsoup4==4.12.3
-requests==2.31.0
-
-# Database
-SQLAlchemy==2.0.25
-
-# Payment
-razorpay==1.4.1
-
-# Environment
 python-dotenv==1.0.0
-
-# Production Server
+razorpay==1.4.1
+PyPDF2==3.0.1
 gunicorn==21.2.0
 
-# Utilities
-python-dateutil==2.8.2
-pytz==2024.1
+# Additional dependencies for production
+wheel==0.41.2
+setuptools==68.2.2

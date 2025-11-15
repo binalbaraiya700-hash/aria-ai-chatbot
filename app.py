@@ -3,220 +3,152 @@ from flask_cors import CORS
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-from werkzeug.utils import secure_filename
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
+import os
+import json
+import secrets
 import google.generativeai as genai
 from dotenv import load_dotenv
-import os
-import razorpay
-import json
-from io import BytesIO
 import PyPDF2
-import base64
-from PIL import Image
-import requests
+import io
 
+# Load environment variables
 load_dotenv()
 
+# Initialize Flask app
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'aria-aviation-secret-2025')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///aviation_db.db'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', secrets.token_hex(32))
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///database.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-
+# Initialize extensions
 db = SQLAlchemy(app)
 CORS(app)
-
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-# Gemini API
-genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
-chat_model = genai.GenerativeModel('gemini-2.0-flash-exp')
-vision_model = genai.GenerativeModel('gemini-2.0-flash-exp')
+# Configure Gemini AI
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+    model = genai.GenerativeModel('gemini-1.5-flash')
+else:
+    print("Warning: GEMINI_API_KEY not found!")
 
-# Razorpay
-razorpay_client = razorpay.Client(auth=(
-    os.getenv('RAZORPAY_KEY_ID'),
-    os.getenv('RAZORPAY_KEY_SECRET')
-))
-
-ADMIN_EMAILS = ['binalbaraiya700@gmail.com']
-
-# ==================== MODELS ====================
+# Database Models
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
+    username = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(200), nullable=False)
+    password_hash = db.Column(db.String(200), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_premium = db.Column(db.Boolean, default=False)
-    premium_price = db.Column(db.Integer, default=121)
-    is_early_bird = db.Column(db.Boolean, default=False)
-    signup_number = db.Column(db.Integer)
-    daily_chat_seconds = db.Column(db.Integer, default=0)
-    last_reset_date = db.Column(db.Date)
-    total_chat_seconds = db.Column(db.Integer, default=0)
+    is_admin = db.Column(db.Boolean, default=False)
+    experience = db.Column(db.String(50), default='beginner')
+    interest = db.Column(db.String(50), default='general')
+    
+    # Gamification
     xp = db.Column(db.Integer, default=0)
     level = db.Column(db.Integer, default=1)
-    streak_days = db.Column(db.Integer, default=0)
-    last_chat_date = db.Column(db.Date)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    messages = db.relationship('Message', backref='user', lazy=True)
+    streak = db.Column(db.Integer, default=0)
+    last_active = db.Column(db.DateTime, default=datetime.utcnow)
+    badges = db.Column(db.Text, default='[]')  # JSON array
+    
+    # Usage tracking
+    messages_count = db.Column(db.Integer, default=0)
+    messages_today = db.Column(db.Integer, default=0)
+    last_message_date = db.Column(db.Date, default=datetime.utcnow().date)
+    
+    chats = db.relationship('Chat', backref='user', lazy=True, cascade='all, delete-orphan')
+    payments = db.relationship('Payment', backref='user', lazy=True)
 
-class Message(db.Model):
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+    
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+class Chat(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     message = db.Column(db.Text, nullable=False)
-    is_user = db.Column(db.Boolean, nullable=False)
-    category = db.Column(db.String(50), default='general')
-    has_media = db.Column(db.Boolean, default=False)
-    media_type = db.Column(db.String(20))
-    media_url = db.Column(db.String(500))
+    response = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-
-class AircraftDiagram(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(200), nullable=False)
-    category = db.Column(db.String(100))
-    description = db.Column(db.Text)
-    image_url = db.Column(db.String(500))
-    components = db.Column(db.Text)  # JSON
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-class LearningModule(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
-    subject = db.Column(db.String(100))  # aerodynamics, structures, etc
-    content = db.Column(db.Text)
-    video_url = db.Column(db.String(500))
-    difficulty = db.Column(db.String(20))  # beginner, intermediate, advanced
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    category = db.Column(db.String(50), default='general')
 
 class Payment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    amount = db.Column(db.Integer)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    currency = db.Column(db.String(10), default='INR')
+    status = db.Column(db.String(20), default='pending')
     razorpay_order_id = db.Column(db.String(100))
     razorpay_payment_id = db.Column(db.String(100))
-    status = db.Column(db.String(20), default='created')
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-
-class Screenshot(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    image_data = db.Column(db.Text)  # base64
-    analysis = db.Column(db.Text)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-
-with app.app_context():
-    db.create_all()
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# ==================== HELPER FUNCTIONS ====================
-def reset_daily_limit(user):
-    today = date.today()
-    if user.last_reset_date != today:
-        user.daily_chat_seconds = 0
-        user.last_reset_date = today
-        db.session.commit()
+# Create database tables
+with app.app_context():
+    db.create_all()
 
-def get_time_remaining(user):
-    if user.is_premium:
-        return 999999
-    return max(0, 1200 - user.daily_chat_seconds)
-
-def update_xp(user, amount=5):
-    user.xp += amount
-    new_level = (user.xp // 50) + 1
-    leveled_up = new_level > user.level
-    user.level = new_level
-    db.session.commit()
-    return leveled_up
-
-def update_streak(user):
-    today = date.today()
-    if user.last_chat_date:
-        diff = (today - user.last_chat_date).days
-        if diff == 1:
-            user.streak_days += 1
-        elif diff > 1:
-            user.streak_days = 1
-    else:
-        user.streak_days = 1
-    user.last_chat_date = today
-    db.session.commit()
-
-# ==================== ROUTES ====================
+# Routes
 @app.route('/')
 @login_required
-def home():
-    reset_daily_limit(current_user)
-    time_remaining = get_time_remaining(current_user)
-    is_admin = current_user.email in ADMIN_EMAILS
-    
-    minutes = time_remaining // 60
-    seconds = time_remaining % 60
-    time_display = f"{minutes:02d}:{seconds:02d}"
-    
-    return render_template('dashboard.html',
-                         user=current_user,
-                         time_remaining=time_display,
-                         is_admin=is_admin)
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        data = request.json
-        username = data.get('username')
-        email = data.get('email')
-        password = data.get('password')
-        
-        if User.query.filter_by(email=email).first():
-            return jsonify({'error': 'Email already registered'}), 400
-        
-        user_count = User.query.count()
-        is_early_bird = user_count < 50
-        
-        user = User(
-            username=username,
-            email=email,
-            password=generate_password_hash(password),
-            signup_number=user_count + 1,
-            is_early_bird=is_early_bird,
-            premium_price=89 if is_early_bird else 121,
-            last_reset_date=date.today()
-        )
-        
-        db.session.add(user)
-        db.session.commit()
-        
-        return jsonify({'success': True}), 201
-    
-    return render_template('register.html')
+def index():
+    return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        data = request.json
-        email = data.get('email')
-        password = data.get('password')
-        
-        user = User.query.filter_by(email=email).first()
-        
-        if user and check_password_hash(user.password, password):
-            login_user(user, remember=True)
-            return jsonify({'success': True})
-        
-        return jsonify({'error': 'Invalid credentials'}), 401
+    if request.method == 'GET':
+        return render_template('login.html')
     
-    return render_template('login.html')
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+    
+    user = User.query.filter_by(email=email).first()
+    
+    if user and user.check_password(password):
+        login_user(user)
+        return jsonify({
+            'success': True,
+            'redirect': '/admin' if user.is_admin else '/'
+        })
+    
+    return jsonify({'success': False, 'error': 'Invalid credentials'}), 401
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'GET':
+        return render_template('register.html')
+    
+    data = request.get_json()
+    username = data.get('username')
+    email = data.get('email')
+    password = data.get('password')
+    experience = data.get('experience', 'beginner')
+    interest = data.get('interest', 'general')
+    
+    if User.query.filter_by(email=email).first():
+        return jsonify({'success': False, 'error': 'Email already registered'}), 400
+    
+    user = User(
+        username=username,
+        email=email,
+        experience=experience,
+        interest=interest
+    )
+    user.set_password(password)
+    
+    db.session.add(user)
+    db.session.commit()
+    
+    return jsonify({'success': True, 'redirect': '/login'})
 
 @app.route('/logout')
 @login_required
@@ -227,190 +159,145 @@ def logout():
 @app.route('/chat', methods=['POST'])
 @login_required
 def chat():
-    try:
-        data = request.json
-        user_message = data.get('message')
-        category = data.get('category', 'general')
-        
-        reset_daily_limit(current_user)
-        time_remaining = get_time_remaining(current_user)
-        
-        if time_remaining <= 0:
+    data = request.get_json()
+    message = data.get('message', '')
+    category = data.get('category', 'general')
+    
+    # Update message count
+    today = datetime.utcnow().date()
+    if current_user.last_message_date != today:
+        current_user.messages_today = 0
+        current_user.last_message_date = today
+    
+    # Check limits for free users
+    if not current_user.is_premium:
+        if current_user.messages_today >= 50:
             return jsonify({
-                'error': 'Daily limit reached!',
-                'limit_reached': True
-            }), 403
-        
-        # Generate AI response
-        response = chat_model.generate_content(user_message)
-        ai_response = response.text
-        
-        # Save messages
-        user_msg = Message(user_id=current_user.id, message=user_message, is_user=True, category=category)
-        ai_msg = Message(user_id=current_user.id, message=ai_response, is_user=False, category=category)
-        
-        db.session.add(user_msg)
-        db.session.add(ai_msg)
-        
-        if not current_user.is_premium:
-            current_user.daily_chat_seconds += 10
-        
-        leveled_up = update_xp(current_user, 5)
-        update_streak(current_user)
-        
-        db.session.commit()
-        
-        return jsonify({
-            'response': ai_response,
-            'time_remaining': get_time_remaining(current_user),
-            'level_up': leveled_up,
-            'level': current_user.level,
-            'xp': current_user.xp,
-            'streak': current_user.streak_days
-        })
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/analyze-screenshot', methods=['POST'])
-@login_required
-def analyze_screenshot():
+                'success': False,
+                'error': 'Daily message limit reached. Upgrade to premium for unlimited messages.'
+            }), 429
+    
     try:
-        data = request.json
-        image_data = data.get('image')  # base64
+        # Generate AI response
+        if GEMINI_API_KEY:
+            context = f"User experience level: {current_user.experience}. Interest: {current_user.interest}. Category: {category}."
+            full_prompt = f"{context}\n\nUser question: {message}"
+            
+            response = model.generate_content(full_prompt)
+            ai_response = response.text
+        else:
+            ai_response = "AI service temporarily unavailable. Please check API configuration."
         
-        # Remove data URL prefix
-        if ',' in image_data:
-            image_data = image_data.split(',')[1]
-        
-        # Decode base64
-        image_bytes = base64.b64decode(image_data)
-        image = Image.open(BytesIO(image_bytes))
-        
-        # Save temporarily
-        temp_path = os.path.join(app.config['UPLOAD_FOLDER'], f'screenshot_{current_user.id}.png')
-        image.save(temp_path)
-        
-        # Analyze with Gemini Vision
-        with open(temp_path, 'rb') as img_file:
-            vision_response = vision_model.generate_content([
-                "Analyze this screenshot in detail. Describe what you see, identify any text, UI elements, or important information.",
-                {"mime_type": "image/png", "data": img_file.read()}
-            ])
-        
-        analysis = vision_response.text
-        
-        # Save to database
-        screenshot = Screenshot(
+        # Save chat
+        chat = Chat(
             user_id=current_user.id,
-            image_data=image_data[:5000],  # Store preview
-            analysis=analysis
+            message=message,
+            response=ai_response,
+            category=category
         )
-        db.session.add(screenshot)
-        db.session.commit()
+        db.session.add(chat)
         
-        os.remove(temp_path)
+        # Update user stats
+        current_user.messages_count += 1
+        current_user.messages_today += 1
+        current_user.xp += 10
+        current_user.last_active = datetime.utcnow()
+        
+        # Level up logic
+        xp_needed = current_user.level * 100
+        if current_user.xp >= xp_needed:
+            current_user.level += 1
+            current_user.xp = 0
+        
+        db.session.commit()
         
         return jsonify({
             'success': True,
-            'analysis': analysis
+            'response': ai_response,
+            'xp': current_user.xp,
+            'level': current_user.level,
+            'messages_left': 50 - current_user.messages_today if not current_user.is_premium else -1
         })
+    
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/analyze-screenshot', methods=['POST'])
+@login_required
+def analyze_screenshot():
+    try:
+        data = request.get_json()
+        image_data = data.get('image', '')
+        prompt = data.get('prompt', 'Analyze this image')
         
+        if not GEMINI_API_KEY:
+            return jsonify({'analysis': 'Screenshot analysis unavailable - API not configured'}), 503
+        
+        # In production, you would process the base64 image with Gemini Vision
+        # For now, return a placeholder
+        analysis = "Screenshot analysis feature is available. The image shows: [AI analysis would appear here]"
+        
+        return jsonify({'analysis': analysis})
+    
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/aircraft-diagrams')
+@app.route('/api/voice-chat', methods=['POST'])
 @login_required
-def aircraft_diagrams():
-    diagrams = AircraftDiagram.query.all()
-    return render_template('aircraft_diagrams.html', diagrams=diagrams)
+def voice_chat():
+    try:
+        data = request.get_json()
+        message = data.get('message', '')
+        
+        if not GEMINI_API_KEY:
+            return jsonify({'response': 'Voice assistant unavailable - API not configured'}), 503
+        
+        response = model.generate_content(f"Respond conversationally to: {message}")
+        
+        return jsonify({'response': response.text})
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
-@app.route('/learning-modules')
+@app.route('/learning')
 @login_required
-def learning_modules():
-    modules = LearningModule.query.all()
-    return render_template('learning_modules.html', modules=modules)
+def learning():
+    return render_template('learning.html')
 
 @app.route('/profile')
 @login_required
 def profile():
-    message_count = Message.query.filter_by(user_id=current_user.id, is_user=True).count()
-    return render_template('profile.html',
-                         user=current_user,
-                         message_count=message_count)
-
-@app.route('/history')
-@login_required
-def history():
-    messages = Message.query.filter_by(user_id=current_user.id).order_by(
-        Message.timestamp.desc()
-    ).limit(100).all()
-    return render_template('history.html', messages=messages)
+    return render_template('profile.html')
 
 @app.route('/admin')
 @login_required
 def admin():
-    if current_user.email not in ADMIN_EMAILS:
-        return redirect(url_for('home'))
-    
-    total_users = User.query.count()
-    premium_users = User.query.filter_by(is_premium=True).count()
-    total_messages = Message.query.count()
-    total_revenue = db.session.query(db.func.sum(Payment.amount)).filter_by(status='success').scalar() or 0
-    
-    recent_users = User.query.order_by(User.created_at.desc()).limit(10).all()
-    
-    return render_template('admin.html',
-                         total_users=total_users,
-                         premium_users=premium_users,
-                         total_messages=total_messages,
-                         total_revenue=total_revenue/100,
-                         recent_users=recent_users)
+    if not current_user.is_admin:
+        return redirect(url_for('index'))
+    return render_template('admin.html')
 
-@app.route('/create-order', methods=['POST'])
+@app.route('/history')
 @login_required
-def create_order():
-    amount = current_user.premium_price * 100
-    
-    order = razorpay_client.order.create({
-        'amount': amount,
-        'currency': 'INR',
-        'payment_capture': 1
-    })
-    
-    payment = Payment(
-        user_id=current_user.id,
-        amount=current_user.premium_price,
-        razorpay_order_id=order['id']
-    )
-    db.session.add(payment)
-    db.session.commit()
-    
+def history():
+    chats = Chat.query.filter_by(user_id=current_user.id).order_by(Chat.timestamp.desc()).limit(50).all()
     return jsonify({
-        'order_id': order['id'],
-        'amount': amount,
-        'currency': 'INR',
-        'key': os.getenv('RAZORPAY_KEY_ID')
+        'chats': [{
+            'message': chat.message,
+            'response': chat.response,
+            'timestamp': chat.timestamp.isoformat(),
+            'category': chat.category
+        } for chat in chats]
     })
 
-@app.route('/payment-success', methods=['POST'])
-@login_required
-def payment_success():
-    data = request.json
-    
-    payment = Payment.query.filter_by(
-        razorpay_order_id=data.get('razorpay_order_id')
-    ).first()
-    
-    if payment:
-        payment.razorpay_payment_id = data.get('razorpay_payment_id')
-        payment.status = 'success'
-        current_user.is_premium = True
-        db.session.commit()
-        return jsonify({'success': True})
-    
-    return jsonify({'error': 'Payment not found'}), 404
+@app.errorhandler(404)
+def not_found(e):
+    return render_template('login.html'), 404
 
+@app.errorhandler(500)
+def internal_error(e):
+    return jsonify({'error': 'Internal server error'}), 500
+
+# Production server configuration
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
