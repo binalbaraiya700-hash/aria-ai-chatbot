@@ -225,33 +225,62 @@ def login():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'GET':
-        return render_template('register.html')
+        try:
+            return render_template('register.html')
+        except Exception as e:
+            return f"Error loading register page: {str(e)}", 500
     
     try:
+        # Get JSON data
         data = request.get_json()
-        username = data.get('username')
-        email = data.get('email')
-        password = data.get('password')
+        if not data:
+            return jsonify({'success': False, 'error': 'No data received'}), 400
+        
+        username = data.get('username', '').strip()
+        email = data.get('email', '').strip().lower()
+        password = data.get('password', '')
         experience = data.get('experience', 'beginner')
         interest = data.get('interest', 'general')
         
-        if User.query.filter_by(email=email).first():
+        # Validation
+        if not username or not email or not password:
+            return jsonify({'success': False, 'error': 'All fields are required'}), 400
+        
+        if len(password) < 6:
+            return jsonify({'success': False, 'error': 'Password must be at least 6 characters'}), 400
+        
+        # Check if email exists
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
             return jsonify({'success': False, 'error': 'Email already registered'}), 400
         
-        user = User(
+        # Create new user
+        new_user = User(
             username=username,
             email=email,
             experience=experience,
             interest=interest
         )
-        user.set_password(password)
+        new_user.set_password(password)
         
-        db.session.add(user)
+        db.session.add(new_user)
         db.session.commit()
         
-        return jsonify({'success': True, 'redirect': '/login'})
+        print(f"✅ New user registered: {email}")
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Registration successful!',
+            'redirect': '/login'
+        }), 201
+        
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        db.session.rollback()
+        print(f"❌ Registration error: {str(e)}")
+        return jsonify({
+            'success': False, 
+            'error': f'Registration failed: {str(e)}'
+        }), 500
 
 @app.route('/logout')
 @login_required
