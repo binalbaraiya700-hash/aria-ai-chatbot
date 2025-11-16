@@ -9,7 +9,34 @@ import os
 import secrets
 import json
 import re
-from brain import ARIABrain
+try:
+    from brain import ARIABrain
+    print("✅ ARIA Brain loaded successfully!")
+except ImportError as e:
+    print(f"⚠️ Brain module not found: {e}")
+    # Fallback dummy class
+    class ARIABrain:
+        def __init__(self):
+            self.personality = {}
+            self.memory = {'conversation_history': []}
+        
+        def process_message(self, message, user_info=None):
+            return {
+                'message': message,
+                'intent': {'primary_intent': 'conversation', 'all_intents': []},
+                'mood': 'neutral',
+                'entities': {},
+                'skill_needed': 'conversation',
+                'system_prompt': 'You are ARIA, a helpful AI assistant.',
+                'conversation_history': '',
+                'safe': True
+            }
+        
+        def add_conversation(self, user_msg, ai_msg):
+            pass
+        
+        def generate_response(self, content, tone='friendly', user_mood='neutral'):
+            return content
 
 # Anthropic Claude API
 import anthropic
