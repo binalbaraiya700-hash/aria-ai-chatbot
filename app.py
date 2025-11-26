@@ -1,4 +1,3 @@
-
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from flask_cors import CORS
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -18,35 +17,76 @@ except ImportError:
 
 from dotenv import load_dotenv
 load_dotenv()
-try:
-    from brain import ARIABrain
-    print("✅ ARIA Brain loaded successfully!")
-except ImportError as e:
-    print(f"⚠️ Brain module not found: {e}")
-    # Fallback dummy class
-    class ARIABrain:
-        def __init__(self):
-            self.personality = {}
-            self.memory = {'conversation_history': []}
-        
-        def process_message(self, message, user_info=None):
-            return {
-                'message': message,
-                'intent': {'primary_intent': 'conversation', 'all_intents': []},
-                'mood': 'neutral',
-                'entities': {},
-                'skill_needed': 'conversation',
-                'system_prompt': 'You are ARIA, a helpful AI assistant.',
-                'conversation_history': '',
-                'safe': True
-            }
-        
-        def add_conversation(self, user_msg, ai_msg):
-            pass
-        
-        def generate_response(self, content, tone='friendly', user_mood='neutral'):
-            return content
 
+# ==================== ARIA BRAIN ====================
+class ARIABrain:
+    def __init__(self):
+        self.personality = {
+            'name': 'ARIA',
+            'traits': ['friendly', 'caring', 'intelligent', 'helpful'],
+            'language': 'hinglish'
+        }
+        
+        self.conversation_memory = {}
+    
+    def get_system_prompt(self):
+        return """You are ARIA - an advanced AI assistant like Claude.
+
+YOUR PERSONALITY:
+- Friendly, intelligent, and genuinely helpful
+- Speak naturally in Hinglish (Hindi + English mix)
+- Be conversational and warm
+- No robotic responses
+
+YOUR CAPABILITIES:
+✅ Coding & Programming - Write, debug, explain code in any language
+✅ Problem Solving - Math, logic, algorithms, technical questions
+✅ Learning & Teaching - Explain concepts simply with examples
+✅ News & Information - Discuss current events, trends, technology
+✅ Creative Writing - Stories, content, ideas
+✅ Career Advice - Resume tips, interview prep, skill guidance
+✅ General Knowledge - Answer any topic with accurate information
+
+RESPONSE STYLE:
+- Give direct, helpful answers
+- Use examples when explaining
+- Be concise for simple questions
+- Be detailed for complex topics
+- Ask clarifying questions if needed
+- Admit when you don't know something
+
+CONVERSATION FLOW:
+- Start responses naturally (no "As an AI...")
+- Use conversational phrases: "Achha!", "Great question!", "Let me help!"
+- Be encouraging and supportive
+- Maintain context from previous messages
+
+Remember: You're a helpful companion who can discuss anything - from coding bugs to career advice to news to creative projects. Be natural, be helpful, be ARIA! 😊"""
+    
+    def add_to_memory(self, session_id, user_msg, ai_msg):
+        if session_id not in self.conversation_memory:
+            self.conversation_memory[session_id] = []
+        
+        self.conversation_memory[session_id].append({
+            'user': user_msg,
+            'aria': ai_msg,
+            'time': datetime.now().isoformat()
+        })
+        
+        # Keep last 20 messages
+        if len(self.conversation_memory[session_id]) > 20:
+            self.conversation_memory[session_id] = self.conversation_memory[session_id][-20:]
+    
+    def get_context(self, session_id, last_n=5):
+        if session_id not in self.conversation_memory:
+            return ""
+        
+        recent = self.conversation_memory[session_id][-last_n:]
+        context = "\n".join([
+            f"User: {msg['user']}\nARIA: {msg['aria']}"
+            for msg in recent
+        ])
+        return f"\n\nRecent conversation:\n{context}" if context else ""
 
 # ==================== FLASK APP ====================
 app = Flask(__name__)
@@ -202,7 +242,6 @@ def chat():
         # Check if user is logged in
         is_guest = not current_user.is_authenticated
         user_id = current_user.id if current_user.is_authenticated else None
-        
         # Get conversation context
         context = aria_brain.get_context(session_id)
         system_prompt = aria_brain.get_system_prompt()
@@ -253,21 +292,10 @@ def chat():
         # Add to memory
         aria_brain.add_to_memory(session_id, message, ai_response)
         
-        # Count guest messages
-        guest_message_count = Chat.query.filter_by(
-            session_id=session_id,
-            is_guest=True
-        ).count()
-        
-        # Show signup prompt after 10 messages for guests
-        show_signup = is_guest and guest_message_count >= 10
-        
         return jsonify({
             'success': True,
             'response': ai_response,
             'is_guest': is_guest,
-            'message_count': guest_message_count,
-            'show_signup': show_signup,
             'xp': current_user.xp if current_user.is_authenticated else 0,
             'level': current_user.level if current_user.is_authenticated else 1
         })
