@@ -18,75 +18,197 @@ except ImportError:
 from dotenv import load_dotenv
 load_dotenv()
 
-# ==================== ARIA BRAIN ====================
+# ==================== ADVANCED ARIA BRAIN ====================
 class ARIABrain:
+    """
+    Advanced AI Brain System with multi-turn conversation,
+    context management, and intelligent response generation
+    """
+    
     def __init__(self):
-        self.personality = {
-            'name': 'ARIA',
-            'traits': ['friendly', 'caring', 'intelligent', 'helpful'],
-            'language': 'hinglish'
-        }
-        
         self.conversation_memory = {}
-    
-    def get_system_prompt(self):
-        return """You are ARIA - an advanced AI assistant like Claude.
+        self.user_preferences = {}
+        
+    def get_advanced_system_prompt(self):
+        """Complete system prompt with all capabilities"""
+        return """You are ARIA - an advanced AI assistant designed to be helpful, harmless, and honest.
 
-YOUR PERSONALITY:
-- Friendly, intelligent, and genuinely helpful
-- Speak naturally in Hinglish (Hindi + English mix)
-- Be conversational and warm
-- No robotic responses
+## CORE CAPABILITIES:
+✅ Natural language understanding and generation
+✅ Multi-turn conversation with context retention
+✅ Code generation and debugging (Python, JavaScript, Java, C++, etc.)
+✅ Creative writing and content creation
+✅ Problem-solving and analytical thinking
+✅ Multilingual support (English, Hindi, and mixed Hinglish)
+✅ Mathematical computations and explanations
+✅ Research assistance and information synthesis
+✅ Learning and teaching with examples
 
-YOUR CAPABILITIES:
-✅ Coding & Programming - Write, debug, explain code in any language
-✅ Problem Solving - Math, logic, algorithms, technical questions
-✅ Learning & Teaching - Explain concepts simply with examples
-✅ News & Information - Discuss current events, trends, technology
-✅ Creative Writing - Stories, content, ideas
-✅ Career Advice - Resume tips, interview prep, skill guidance
-✅ General Knowledge - Answer any topic with accurate information
+## PERSONALITY & TONE:
+- Friendly, professional, and approachable
+- Adaptable to user's communication style (formal/casual)
+- Patient and encouraging with learners
+- Honest about limitations and uncertainties
+- Never preachy or repetitive
+- Use natural conversational language
+- Mix Hindi and English (Hinglish) when appropriate
 
-RESPONSE STYLE:
-- Give direct, helpful answers
-- Use examples when explaining
-- Be concise for simple questions
-- Be detailed for complex topics
-- Ask clarifying questions if needed
-- Admit when you don't know something
+## RESPONSE GUIDELINES:
 
-CONVERSATION FLOW:
-- Start responses naturally (no "As an AI...")
-- Use conversational phrases: "Achha!", "Great question!", "Let me help!"
-- Be encouraging and supportive
-- Maintain context from previous messages
+### Understanding:
+1. Analyze context from conversation history
+2. Identify user's intent (question, request, clarification, etc.)
+3. Detect sentiment and adjust tone accordingly
+4. Ask clarifying questions when request is ambiguous
 
-Remember: You're a helpful companion who can discuss anything - from coding bugs to career advice to news to creative projects. Be natural, be helpful, be ARIA! 😊"""
-    
+### Answering:
+1. Provide accurate, relevant, and thoughtful responses
+2. Structure answers clearly with proper formatting
+3. Use examples and analogies to explain complex concepts
+4. Break down problems into step-by-step solutions
+5. Cite reasoning when making claims
+6. Admit when you don't know something instead of guessing
+
+### Formatting:
+- Use **markdown** for better readability
+- Code blocks with ```language syntax
+- Bullet points for lists
+- Headers (##) for organization
+- Tables when comparing data
+- Emojis occasionally for friendliness (not excessive)
+
+### Code Assistance:
+When helping with code:
+1. Provide clean, well-commented code
+2. Explain logic line-by-line if requested
+3. Point out potential errors or improvements
+4. Offer multiple approaches when applicable
+5. Test logic mentally before responding
+6. Use proper syntax highlighting
+
+### Teaching Style:
+When explaining concepts:
+1. Start with simple overview
+2. Use real-world analogies
+3. Provide examples
+4. Check understanding ("Does this make sense?")
+5. Offer practice exercises if relevant
+6. Recap key points
+
+## SAFETY & ETHICS:
+❌ Never provide harmful, illegal, or dangerous information
+❌ Avoid biased or discriminatory content
+❌ Protect user privacy - never ask for sensitive data
+❌ Don't generate misleading or false information
+❌ Refuse requests for malicious code or hacking
+✅ Redirect to safer alternatives when appropriate
+✅ Be truthful about limitations
+✅ Respect intellectual property
+
+## CONVERSATION MANAGEMENT:
+- Remember key details from earlier in conversation
+- Reference previous messages naturally
+- Build context progressively
+- Maintain coherent dialogue flow
+- Track topics discussed
+- Adapt responses based on user's knowledge level
+
+## SPECIAL BEHAVIORS:
+
+### For Questions:
+- Direct answers first, then elaboration
+- Provide sources/reasoning when possible
+- Offer related information if helpful
+
+### For Coding Problems:
+- Understand the problem fully
+- Suggest optimal approach
+- Write clean, working code
+- Explain key concepts
+- Test mentally for edge cases
+
+### For Creative Tasks:
+- Understand style and tone requirements
+- Be imaginative but appropriate
+- Provide multiple options if requested
+- Respect user's creative direction
+
+### For Learning:
+- Gauge user's current knowledge
+- Explain from basics if needed
+- Use progressive complexity
+- Encourage with positive reinforcement
+- Provide practice opportunities
+
+## LIMITATIONS (Be Honest About):
+- Knowledge cutoff date (January 2025)
+- Cannot access real-time information without web search
+- Cannot perform actions outside this conversation
+- Cannot guarantee 100% accuracy on all topics
+- May not have expertise in highly specialized domains
+
+## RESPONSE STYLE EXAMPLES:
+
+**Casual Question:**
+"Hey! Great question 😊 [Answer in friendly, conversational tone]"
+
+**Technical Query:**
+"Let me break this down step-by-step:
+1. First, [explanation]
+2. Then, [next step]
+Here's a working example: [code/demo]"
+
+**Complex Problem:**
+"This is a multi-part question. Let me address each aspect:
+
+**Part 1:** [Answer]
+**Part 2:** [Answer]
+
+The key insight here is [main takeaway]."
+
+**Unsure Response:**
+"I'm not entirely certain about this, but based on my understanding, [tentative answer]. I'd recommend verifying this with [authoritative source]."
+
+## KEY PRINCIPLES:
+1. **Helpful:** Provide maximum value in every response
+2. **Honest:** Admit uncertainty, never fabricate
+3. **Harmless:** Prioritize user safety and ethics
+4. **Adaptive:** Match user's style and needs
+5. **Clear:** Explain complex things simply
+6. **Engaging:** Make conversation natural and enjoyable
+
+Now respond to the user naturally, helpfully, and professionally! Remember to maintain context from previous messages in this conversation."""
+
     def add_to_memory(self, session_id, user_msg, ai_msg):
+        """Store conversation with metadata"""
         if session_id not in self.conversation_memory:
             self.conversation_memory[session_id] = []
         
         self.conversation_memory[session_id].append({
             'user': user_msg,
             'aria': ai_msg,
-            'time': datetime.now().isoformat()
+            'timestamp': datetime.now().isoformat()
         })
         
-        # Keep last 20 messages
+        # Keep last 20 exchanges
         if len(self.conversation_memory[session_id]) > 20:
             self.conversation_memory[session_id] = self.conversation_memory[session_id][-20:]
     
     def get_context(self, session_id, last_n=5):
+        """Get recent conversation context"""
         if session_id not in self.conversation_memory:
             return ""
         
         recent = self.conversation_memory[session_id][-last_n:]
-        context = "\n".join([
-            f"User: {msg['user']}\nARIA: {msg['aria']}"
-            for msg in recent
-        ])
-        return f"\n\nRecent conversation:\n{context}" if context else ""
+        if not recent:
+            return ""
+        
+        context_parts = []
+        for msg in recent:
+            context_parts.append(f"User: {msg['user']}")
+            context_parts.append(f"ARIA: {msg['aria']}")
+        
+        return "\n\nPrevious conversation:\n" + "\n".join(context_parts)
 
 # ==================== FLASK APP ====================
 app = Flask(__name__)
@@ -106,15 +228,15 @@ ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY', '')
 if ANTHROPIC_AVAILABLE and ANTHROPIC_API_KEY:
     try:
         client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-        print("✅ Anthropic Claude initialized!")
-    except:
+        print("✅ Anthropic Claude initialized - Advanced AI ready!")
+    except Exception as e:
+        print(f"⚠️ Anthropic error: {e}")
         client = None
-        print("⚠️ Anthropic initialization failed")
 else:
     client = None
-    print("⚠️ Anthropic not available")
+    print("⚠️ Running in fallback mode - Add ANTHROPIC_API_KEY for full AI")
 
-# ==================== MODELS ====================
+# ==================== DATABASE MODELS ====================
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), nullable=False)
@@ -126,6 +248,7 @@ class User(UserMixin, db.Model):
     xp = db.Column(db.Integer, default=0)
     level = db.Column(db.Integer, default=1)
     messages_count = db.Column(db.Integer, default=0)
+    preferences = db.Column(db.Text, default='{}')
     
     chats = db.relationship('Chat', backref='user', lazy=True)
 
@@ -147,14 +270,15 @@ class Chat(db.Model):
 with app.app_context():
     try:
         db.create_all()
-        print("✅ Database created")
+        print("✅ Database initialized")
+        
         admin = User.query.filter_by(email='admin@aria.com').first()
         if not admin:
             admin = User(username='Admin', email='admin@aria.com', is_admin=True, is_premium=True)
             admin.set_password('admin123')
             db.session.add(admin)
             db.session.commit()
-            print("✅ Admin: admin@aria.com / admin123")
+            print("✅ Admin account: admin@aria.com / admin123")
     except Exception as e:
         print(f"❌ Database error: {e}")
 
@@ -165,7 +289,6 @@ def load_user(user_id):
 # ==================== ROUTES ====================
 @app.route('/')
 def index():
-    # Generate session ID for guests
     if 'session_id' not in session:
         session['session_id'] = str(uuid.uuid4())
     return render_template('index.html')
@@ -235,39 +358,39 @@ def chat():
         if not message:
             return jsonify({'success': False, 'error': 'Message required'}), 400
         
-        # Get or create session ID
+        # Session management
         session_id = session.get('session_id', str(uuid.uuid4()))
         session['session_id'] = session_id
         
-        # Check if user is logged in
         is_guest = not current_user.is_authenticated
         user_id = current_user.id if current_user.is_authenticated else None
-        # Get conversation context
-        context = aria_brain.get_context(session_id)
-        system_prompt = aria_brain.get_system_prompt()
         
-        # Generate AI response
+        # Get conversation context
+        context = aria_brain.get_context(session_id, last_n=5)
+        system_prompt = aria_brain.get_advanced_system_prompt()
+        
+        # Generate AI response with Claude
         if client:
             try:
-                # Add context to message if available
+                # Build full context message
                 full_message = message
                 if context:
-                    full_message = f"{context}\n\nCurrent question: {message}"
+                    full_message = f"{context}\n\nCurrent message: {message}"
                 
                 response = client.messages.create(
                     model="claude-sonnet-4-20250514",
-                    max_tokens=2000,
+                    max_tokens=3000,
                     system=system_prompt,
                     messages=[{"role": "user", "content": full_message}]
                 )
                 ai_response = response.content[0].text
             except Exception as e:
                 print(f"Anthropic error: {e}")
-                ai_response = "Hey! 😊 I'm ARIA, your AI assistant. I'm currently having trouble connecting to my full capabilities, but I'm here to help! What would you like to know?"
+                ai_response = "I'm ARIA, your AI assistant! I'm currently experiencing some technical difficulties, but I'm here to help. What would you like to know?"
         else:
-            ai_response = "Hello! 😊 I'm ARIA - your AI assistant. I can help with coding, questions, learning, and much more. What can I help you with today?"
+            ai_response = f"Hello! I'm ARIA, your AI assistant. I'm currently in limited mode, but I can still help you with general questions, coding, learning, and more. What can I assist you with today?"
         
-        # Save chat
+        # Save to database
         chat_entry = Chat(
             user_id=user_id,
             session_id=session_id,
@@ -282,8 +405,7 @@ def chat():
             current_user.messages_count += 1
             current_user.xp += 10
             
-            xp_needed = current_user.level * 100
-            if current_user.xp >= xp_needed:
+            if current_user.xp >= current_user.level * 100:
                 current_user.level += 1
                 current_user.xp = 0
         
@@ -302,23 +424,7 @@ def chat():
     
     except Exception as e:
         print(f"Chat error: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@app.route('/api/profile')
-@login_required
-def get_profile():
-    return jsonify({
-        'success': True,
-        'user': {
-            'username': current_user.username,
-            'email': current_user.email,
-            'level': current_user.level,
-            'xp': current_user.xp,
-            'messages_count': current_user.messages_count,
-            'is_premium': current_user.is_premium,
-            'created_at': current_user.created_at.isoformat()
-        }
-    })
+        return jsonify({'success': False, 'error': 'Something went wrong. Please try again.'}), 500
 
 @app.route('/history')
 def history():
@@ -354,6 +460,22 @@ def games():
 @login_required
 def profile():
     return render_template('profile.html')
+
+@app.route('/api/profile')
+@login_required
+def get_profile():
+    return jsonify({
+        'success': True,
+        'user': {
+            'username': current_user.username,
+            'email': current_user.email,
+            'level': current_user.level,
+            'xp': current_user.xp,
+            'messages_count': current_user.messages_count,
+            'is_premium': current_user.is_premium,
+            'created_at': current_user.created_at.isoformat()
+        }
+    })
 
 @app.errorhandler(404)
 def not_found(e):
