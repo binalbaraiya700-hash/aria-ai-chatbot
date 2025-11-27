@@ -3,343 +3,659 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARIA</title>
+    <title>ARIA - Aviation AI Assistant</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: #343541;
-            color: #ececf1;
-            height: 100vh;
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%);
+            min-height: 100vh;
+            color: #e2e8f0;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Radar Background */
+        .radar-bg {
+            position: fixed;
+            inset: 0;
+            opacity: 0.08;
+            background-image: radial-gradient(circle at 50% 50%, #3b82f6 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+        }
+        
+        /* Top Nav - Cockpit Style */
+        .top-nav {
+            background: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(20px);
+            border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+            padding: 12px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        .nav-content {
+            max-width: 1400px;
+            margin: 0 auto;
             display: flex;
-            flex-direction: column;
-            overflow: hidden;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+            position: relative;
+        }
+        
+        .status-dot {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 12px;
+            height: 12px;
+            background: #22c55e;
+            border-radius: 50%;
+            border: 2px solid #0f172a;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .logo-text h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #e2e8f0;
+        }
+        
+        .callsign {
+            font-size: 11px;
+            color: #06b6d4;
+            font-family: monospace;
+        }
+        
+        /* Flight Stats */
+        .flight-stats {
+            display: none;
+            gap: 12px;
+        }
+        
+        @media (min-width: 768px) {
+            .flight-stats { display: flex; }
+        }
+        
+        .stat-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 10px;
+            padding: 8px 12px;
+        }
+        
+        .stat-label {
+            font-size: 10px;
+            color: #94a3b8;
+            text-transform: uppercase;
+        }
+        
+        .stat-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: #e2e8f0;
+        }
+        
+        .stat-unit {
+            font-size: 10px;
+            color: #06b6d4;
+        }
+        
+        /* Nav Actions */
+        .nav-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .nav-btn {
+            padding: 8px 16px;
+            border-radius: 10px;
+            border: none;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .nav-btn.primary {
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            color: white;
+        }
+        
+        .nav-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #f97316, #dc2626);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
         }
         
         /* Main Container */
         .container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            max-width: 800px;
-            width: 100%;
+            max-width: 1200px;
             margin: 0 auto;
-            position: relative;
+            padding: 24px;
         }
         
-        /* Messages Area */
-        .messages {
-            flex: 1;
-            overflow-y: auto;
+        /* Mode Selector */
+        .mode-selector {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 16px;
             padding: 20px;
+            margin-bottom: 24px;
         }
         
-        .messages::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        .messages::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        
-        .messages::-webkit-scrollbar-thumb {
-            background: #565869;
-            border-radius: 4px;
-        }
-        
-        /* Message Rows */
-        .message-row {
-            width: 100%;
-            padding: 24px 0;
-        }
-        
-        .message-row.user {
-            background: #343541;
-        }
-        
-        .message-row.assistant {
-            background: #444654;
-        }
-        
-        .message-wrapper {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 0 20px;
+        .mode-title {
+            font-size: 13px;
+            color: #06b6d4;
+            text-transform: uppercase;
+            margin-bottom: 16px;
             display: flex;
-            gap: 24px;
+            align-items: center;
+            gap: 8px;
         }
         
-        .avatar {
-            width: 30px;
-            height: 30px;
-            border-radius: 2px;
+        .mode-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+        }
+        
+        .mode-btn {
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            background: rgba(30, 41, 59, 0.6);
+            color: #e2e8f0;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .mode-btn:hover {
+            background: rgba(30, 41, 59, 0.8);
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+        
+        .mode-btn.active {
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            border-color: #06b6d4;
+        }
+        
+        .mode-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        
+        .mode-name {
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        /* Quick Commands */
+        .quick-commands {
+            margin-bottom: 32px;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .commands-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+        }
+        
+        .command-card {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .command-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+            border-color: #06b6d4;
+        }
+        
+        .command-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+        
+        .command-card:nth-child(1) .command-icon { background: linear-gradient(135deg, #3b82f6, #06b6d4); }
+        .command-card:nth-child(2) .command-icon { background: linear-gradient(135deg, #22c55e, #10b981); }
+        .command-card:nth-child(3) .command-icon { background: linear-gradient(135deg, #a855f7, #ec4899); }
+        .command-card:nth-child(4) .command-icon { background: linear-gradient(135deg, #f97316, #dc2626); }
+        .command-card:nth-child(5) .command-icon { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .command-card:nth-child(6) .command-icon { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+        
+        .command-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        
+        .command-desc {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        
+        /* Messages */
+        .messages {
+            margin-bottom: 32px;
+            min-height: 200px;
+        }
+        
+        .message {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 24px;
+            animation: slideUp 0.4s ease;
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message.user {
+            flex-direction: row-reverse;
+        }
+        
+        .message-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             flex-shrink: 0;
+            font-size: 20px;
+            border: 2px solid;
         }
         
-        .user .avatar {
-            background: #5436da;
+        .message.assistant .message-avatar {
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            border-color: #06b6d4;
         }
         
-        .assistant .avatar {
-            background: #19c37d;
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, #f97316, #dc2626);
+            border-color: #f97316;
         }
         
-        .message-content {
-            flex: 1;
-            min-width: 0;
+        .message-bubble {
+            max-width: 75%;
+            padding: 16px 20px;
+            border-radius: 16px;
+            font-size: 15px;
+            line-height: 1.6;
         }
         
-        .message-text {
-            font-size: 16px;
-            line-height: 28px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            color: #ececf1;
+        .message.assistant .message-bubble {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(71, 85, 105, 0.5);
         }
         
-        .typing {
-            color: #8e8ea0;
+        .message.user .message-bubble {
+            background: linear-gradient(135deg, #f97316, #dc2626);
+            border: 2px solid #f97316;
+        }
+        
+        .message-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .action-btn {
+            padding: 6px 12px;
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            border-radius: 8px;
+            font-size: 12px;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .action-btn:hover {
+            background: rgba(30, 41, 59, 0.8);
+            color: #e2e8f0;
+            border-color: #06b6d4;
         }
         
         /* Input Area */
         .input-area {
-            padding: 24px 0 48px;
-            background: #343541;
+            position: sticky;
+            bottom: 24px;
         }
         
         .input-container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 0 20px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(30px);
+            border: 2px solid rgba(59, 130, 246, 0.4);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
         }
         
         .input-wrapper {
-            background: #40414f;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
-            align-items: flex-end;
+            gap: 12px;
             padding: 12px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            align-items: flex-end;
         }
         
-        .input-wrapper:focus-within {
-            border-color: #565869;
+        .input-tools {
+            display: flex;
+            gap: 6px;
+        }
+        
+        .tool-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            color: #06b6d4;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .tool-btn:hover {
+            background: rgba(30, 41, 59, 0.9);
+            transform: scale(1.1);
         }
         
         #messageInput {
             flex: 1;
-            background: transparent;
-            border: none;
-            outline: none;
-            color: #ececf1;
-            font-size: 16px;
-            line-height: 24px;
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: #e2e8f0;
+            font-size: 15px;
             resize: none;
-            max-height: 200px;
-            font-family: inherit;
-            padding: 0;
+            max-height: 120px;
+            outline: none;
         }
         
-        #messageInput::placeholder {
-            color: #8e8ea0;
+        #messageInput:focus {
+            border-color: #06b6d4;
+            background: rgba(30, 41, 59, 0.8);
         }
         
         .send-btn {
-            background: transparent;
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
             border: none;
-            color: #8e8ea0;
-            width: 32px;
-            height: 32px;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            border-radius: 6px;
-            transition: all 0.2s;
-            flex-shrink: 0;
-            margin-left: 8px;
         }
         
         .send-btn:hover:not(:disabled) {
-            background: #565869;
+            transform: scale(1.1) translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.5);
         }
         
         .send-btn:disabled {
-            opacity: 0.4;
+            opacity: 0.3;
             cursor: not-allowed;
         }
         
-        .send-icon {
-            width: 20px;
-            height: 20px;
-        }
-        
-        /* Welcome Screen */
-        .welcome {
-            flex: 1;
+        .input-footer {
+            padding: 12px 16px;
+            border-top: 1px solid rgba(71, 85, 105, 0.3);
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            text-align: center;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #64748b;
+            font-family: monospace;
         }
         
-        .welcome h1 {
-            font-size: 32px;
-            font-weight: 600;
-            margin-bottom: 32px;
-            color: #ececf1;
-        }
-        
-        .examples {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 12px;
-            max-width: 900px;
-            width: 100%;
-        }
-        
-        .example-card {
-            background: #444654;
-            padding: 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background 0.2s;
-            text-align: left;
-        }
-        
-        .example-card:hover {
-            background: #565869;
-        }
-        
-        .example-title {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #ececf1;
-        }
-        
-        .example-text {
-            font-size: 13px;
-            color: #c5c5d2;
-            line-height: 1.5;
+        .frequency {
+            color: #06b6d4;
         }
         
         @media (max-width: 768px) {
-            .message-wrapper {
-                gap: 16px;
-            }
-            
-            .message-text {
-                font-size: 15px;
-                line-height: 24px;
-            }
-            
-            .examples {
-                grid-template-columns: 1fr;
-            }
-            
-            .welcome h1 {
-                font-size: 24px;
-            }
+            .container { padding: 16px; }
+            .message-bubble { max-width: 85%; }
+            .commands-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
+    <div class="radar-bg"></div>
+    
+    <!-- Top Navigation -->
+    <nav class="top-nav">
+        <div class="nav-content">
+            <div class="logo-section">
+                <div class="logo-icon">
+                    ✈️
+                    <div class="status-dot"></div>
+                </div>
+                <div class="logo-text">
+                    <h1>AEROCHAT AI</h1>
+                    <div class="callsign">CALLSIGN: ATC-AI-001</div>
+                </div>
+            </div>
+            
+            <div class="flight-stats">
+                <div class="stat-card">
+                    <div class="stat-label">Altitude</div>
+                    <div class="stat-value">FL350 <span class="stat-unit">ft</span></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Speed</div>
+                    <div class="stat-value">450 <span class="stat-unit">kts</span></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Heading</div>
+                    <div class="stat-value">270° <span class="stat-unit">MAG</span></div>
+                </div>
+            </div>
+            
+            <div class="nav-actions">
+                <button class="nav-btn primary">Flight Deck</button>
+                <div class="user-avatar">👤</div>
+            </div>
+        </div>
+    </nav>
+    
     <div class="container">
-        <div id="messagesArea" class="messages">
-            <div class="welcome" id="welcome">
-                <h1>ARIA</h1>
-                <div class="examples">
-                    <div class="example-card" onclick="sendExample('Explain quantum computing in simple terms')">
-                        <div class="example-title">💡 Explain concepts</div>
-                        <div class="example-text">Quantum computing in simple terms →</div>
+        <!-- Mode Selector -->
+        <div class="mode-selector">
+            <div class="mode-title">📡 SELECT OPERATION MODE</div>
+            <div class="mode-grid">
+                <button class="mode-btn active">
+                    <div class="mode-icon">✈️</div>
+                    <div class="mode-name">General Aviation</div>
+                </button>
+                <button class="mode-btn">
+                    <div class="mode-icon">☁️</div>
+                    <div class="mode-name">Weather Check</div>
+                </button>
+                <button class="mode-btn">
+                    <div class="mode-icon">🧭</div>
+                    <div class="mode-name">Navigation</div>
+                </button>
+                <button class="mode-btn">
+                    <div class="mode-icon">⚠️</div>
+                    <div class="mode-name">Safety & Ops</div>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Quick Commands -->
+        <div class="quick-commands" id="quickCommands">
+            <h2 class="section-title">🎯 Quick Commands</h2>
+            <div class="commands-grid">
+                <div class="command-card" onclick="sendExample('Get me current weather for')">
+                    <div class="command-icon">☁️</div>
+                    <div class="command-title">Weather Briefing</div>
+                    <div class="command-desc">Get current weather info</div>
+                </div>
+                <div class="command-card" onclick="sendExample('Tell me about airport')">
+                    <div class="command-icon">📍</div>
+                    <div class="command-title">Airport Info</div>
+                    <div class="command-desc">Airport details & runways</div>
+                </div>
+                <div class="command-card" onclick="sendExample('What are the ATC frequencies for')">
+                    <div class="command-icon">📻</div>
+                    <div class="command-title">ATC Frequencies</div>
+                    <div class="command-desc">Radio frequencies</div>
+                </div>
+                <div class="command-card" onclick="sendExample('Help me plan a flight from')">
+                    <div class="command-icon">🗺️</div>
+                    <div class="command-title">Flight Planning</div>
+                    <div class="command-desc">Route planning</div>
+                </div>
+                <div class="command-card" onclick="sendExample('Calculate performance for')">
+                    <div class="command-icon">⚡</div>
+                    <div class="command-title">Performance Calc</div>
+                    <div class="command-desc">Takeoff/landing data</div>
+                </div>
+                <div class="command-card" onclick="sendExample('Explain aviation regulation about')">
+                    <div class="command-icon">📋</div>
+                    <div class="command-title">Regulations</div>
+                    <div class="command-desc">Aviation rules & regs</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Messages -->
+        <div class="messages" id="messages">
+            <div class="message assistant">
+                <div class="message-avatar">✈️</div>
+                <div>
+                    <div class="message-bubble">
+                        ✈️ Welcome aboard! I'm your Aviation AI Assistant. Ready for takeoff? How can I assist you with flight operations, weather, navigation, or aviation knowledge today?
                     </div>
-                    <div class="example-card" onclick="sendExample('Write a Python function to reverse a string')">
-                        <div class="example-title">💻 Help with code</div>
-                        <div class="example-text">Python function to reverse a string →</div>
-                    </div>
-                    <div class="example-card" onclick="sendExample('What are the latest developments in AI?')">
-                        <div class="example-title">🌍 Get updates</div>
-                        <div class="example-text">Latest developments in AI →</div>
+                    <div class="message-actions">
+                        <button class="action-btn">📋 Copy</button>
+                        <button class="action-btn">❤️ Like</button>
                     </div>
                 </div>
             </div>
         </div>
-
+        
+        <!-- Input Area -->
         <div class="input-area">
             <div class="input-container">
                 <div class="input-wrapper">
+                    <div class="input-tools">
+                        <button class="tool-btn" title="Weather">☁️</button>
+                        <button class="tool-btn" title="Charts">🗺️</button>
+                    </div>
                     <textarea
                         id="messageInput"
-                        placeholder="Message ARIA..."
+                        placeholder="Enter your aviation query... (e.g., 'Weather for KJFK', 'Explain Class B airspace')"
                         rows="1"
-                        oninput="autoResize(this)"
-                        onkeydown="handleKeyPress(event)"
+                        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"
+                        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"
                     ></textarea>
                     <button class="send-btn" onclick="sendMessage()" id="sendBtn">
-                        <svg class="send-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
-                        </svg>
+                        ➤
                     </button>
+                </div>
+                <div class="input-footer">
+                    <div>🟢 <span class="frequency">ATC FREQUENCY: 121.5 MHz</span></div>
+                    <div>Squawk 7700 for emergency</div>
                 </div>
             </div>
         </div>
     </div>
-
+    
     <script>
-        function autoResize(textarea) {
-            textarea.style.height = 'auto';
-            textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
-        }
-
-        function handleKeyPress(event) {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                sendMessage();
-            }
-        }
-
         function sendExample(text) {
-            document.getElementById('messageInput').value = text;
-            sendMessage();
+            document.getElementById('messageInput').value = text + ' ';
+            document.getElementById('messageInput').focus();
+            document.getElementById('quickCommands').style.display = 'none';
         }
-
+        
         async function sendMessage() {
             const input = document.getElementById('messageInput');
             const message = input.value.trim();
             
             if (!message) return;
             
-            // Hide welcome
-            const welcome = document.getElementById('welcome');
-            if (welcome) welcome.style.display = 'none';
+            document.getElementById('quickCommands').style.display = 'none';
             
-            // Clear input
             input.value = '';
             input.style.height = 'auto';
             
-            // Disable send
             const sendBtn = document.getElementById('sendBtn');
             sendBtn.disabled = true;
             
-            // Add user message
             addMessage(message, 'user');
-            
-            // Add typing indicator
-            const typingId = 'typing-' + Date.now();
-            addMessage('<span class="typing">●●●</span>', 'assistant', typingId);
+            addTyping();
             
             try {
                 const response = await fetch('/chat', {
@@ -350,50 +666,70 @@
                 
                 const data = await response.json();
                 
-                // Remove typing
-                const typing = document.getElementById(typingId);
-                if (typing) typing.parentElement.remove();
+                removeTyping();
                 
                 if (data.success) {
                     addMessage(data.response, 'assistant');
                 } else {
-                    addMessage('Something went wrong. Please try again.', 'assistant');
+                    addMessage('⚠️ Communication error. Please try again.', 'assistant');
                 }
             } catch (error) {
-                const typing = document.getElementById(typingId);
-                if (typing) typing.parentElement.remove();
-                addMessage('Connection error. Please try again.', 'assistant');
+                removeTyping();
+                addMessage('⚠️ Connection error. Check your connection and try again.', 'assistant');
             }
             
             sendBtn.disabled = false;
             input.focus();
         }
-
+        
         function addMessage(text, role) {
-            const messagesArea = document.getElementById('messagesArea');
+            const messages = document.getElementById('messages');
+            const div = document.createElement('div');
+            div.className = `message ${role}`;
             
-            const messageRow = document.createElement('div');
-            messageRow.className = `message-row ${role}`;
+            const avatar = role === 'user' ? '👤' : '✈️';
             
-            const avatar = role === 'user' ? '👤' : '🤖';
-            
-            messageRow.innerHTML = `
-                <div class="message-wrapper">
-                    <div class="avatar">${avatar}</div>
-                    <div class="message-content">
-                        <div class="message-text">${text}</div>
-                    </div>
+            div.innerHTML = `
+                <div class="message-avatar">${avatar}</div>
+                <div>
+                    <div class="message-bubble">${text}</div>
+                    ${role === 'assistant' ? `
+                        <div class="message-actions">
+                            <button class="action-btn" onclick="copyText('${text.replace(/'/g, "\\'")}')">📋 Copy</button>
+                            <button class="action-btn">❤️ Like</button>
+                            <button class="action-btn">🔄 Regen</button>
+                        </div>
+                    ` : ''}
                 </div>
             `;
             
-            messagesArea.appendChild(messageRow);
-            messagesArea.scrollTop = messagesArea.scrollHeight;
+            messages.appendChild(div);
+            div.scrollIntoView({ behavior: 'smooth' });
         }
-
-        // Focus input on load
-        window.onload = function() {
-            document.getElementById('messageInput').focus();
-        };
+        
+        function addTyping() {
+            const messages = document.getElementById('messages');
+            const div = document.createElement('div');
+            div.className = 'message assistant';
+            div.id = 'typing';
+            div.innerHTML = `
+                <div class="message-avatar">✈️</div>
+                <div class="message-bubble">Thinking...</div>
+            `;
+            messages.appendChild(div);
+        }
+        
+        function removeTyping() {
+            const typing = document.getElementById('typing');
+            if (typing) typing.remove();
+        }
+        
+        function copyText(text) {
+            navigator.clipboard.writeText(text);
+            alert('✅ Copied!');
+        }
+        
+        document.getElementById('messageInput').focus();
     </script>
 </body>
 </html>
