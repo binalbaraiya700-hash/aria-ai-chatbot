@@ -1,0 +1,1 @@
+- [x] Uncomment the window.location.href line in the startLearning function in templates/learning.html to enable redirection to the learning module.
